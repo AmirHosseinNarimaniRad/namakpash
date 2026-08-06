@@ -11,6 +11,9 @@ keys/
 secrets.json
 *.local.json
 
+# ---- Personal / local-only ----
+CLAUDE.md
+
 # ---- Build output ----
 bin/
 obj/
