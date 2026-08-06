@@ -1,0 +1,38 @@
+# ---- Secrets: never commit ----
+# Release signing keystore + its plaintext password. Losing these means you can
+# never ship an update that installs over an existing copy of the app.
+keys/
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+secrets.json
+*.local.json
+
+# ---- Build output ----
+bin/
+obj/
+dist/
+*.apk
+*.aab
+*.binlog
+
+# ---- .NET / IDE ----
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+project.lock.json
+project.assets.json
+TestResults/
+[Ll]og/
+[Ll]ogs/
+
+# ---- macOS ----
+.DS_Store
+.AppleDouble
+._*

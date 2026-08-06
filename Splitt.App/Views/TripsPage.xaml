@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Splitt.App.Views.TripsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Splitt.App.ViewModels"
+    x:DataType="vm:TripsViewModel"
+    Title="نمک‌پاش">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="بازیابی" Command="{Binding ImportCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid>
+        <CollectionView
+            ItemsSource="{Binding Trips}"
+            Margin="{StaticResource PagePadding}"
+            IsVisible="{Binding IsEmpty, Converter={StaticResource Not}}">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.Footer>
+                <Grid HeightRequest="88" />
+            </CollectionView.Footer>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:TripCard">
+                    <Border Style="{StaticResource Card}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding OpenTripCommand, Source={RelativeSource AncestorType={x:Type vm:TripsViewModel}}}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding Name}" Style="{StaticResource SectionLabel}" />
+                            <Label Grid.Row="1" Grid.Column="0" Text="{Binding SubText}" Style="{StaticResource CaptionLabel}" />
+                            <Label Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
+                                   Text="{Binding TotalText}"
+                                   Style="{StaticResource AmountLabel}"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Empty state -->
+        <VerticalStackLayout
+            IsVisible="{Binding IsEmpty}"
+            VerticalOptions="Center"
+            HorizontalOptions="Center"
+            Spacing="8"
+            Padding="32,0">
+            <Label Text="🧳" FontSize="56" HorizontalOptions="Center" />
+            <Label Text="هنوز سفری نساخته‌ای" Style="{StaticResource SectionLabel}" HorizontalTextAlignment="Center" />
+            <Label Text="اولین سفر یا دورهمی را بساز و هزینه‌ها را راحت دنگ کن."
+                   Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <Button
+            Text="＋ سفر جدید"
+            Style="{StaticResource Fab}"
+            Command="{Binding AddTripCommand}"
+            VerticalOptions="End"
+            Margin="0,0,0,24" />
+
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                           VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Splitt.App.Views.ExpenseEditorPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Splitt.App.ViewModels"
+    x:DataType="vm:ExpenseEditorViewModel"
+    Title="{Binding PageTitle}">
+
+    <Grid>
+        <Grid RowDefinitions="*,Auto" Padding="{StaticResource PagePadding}">
+            <ScrollView Grid.Row="0">
+                <VerticalStackLayout Spacing="16">
+
+                    <!-- Big amount input -->
+                    <Border Style="{StaticResource Card}" Padding="16,20">
+                        <VerticalStackLayout Spacing="4">
+                            <Entry Text="{Binding AmountText}"
+                                   Placeholder="0"
+                                   Keyboard="Numeric"
+                                   FontFamily="VazirmatnBold"
+                                   FontSize="36"
+                                   HorizontalTextAlignment="Center"
+                                   Unfocused="OnAmountUnfocused"
+                                   x:Name="AmountEntry" />
+                            <Label Text="{Binding AmountPreview}" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Payer -->
+                    <Label Text="چه کسی پرداخت کرد؟" Style="{StaticResource SectionLabel}" />
+                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                        <HorizontalStackLayout Spacing="8"
+                                               BindableLayout.ItemsSource="{Binding Payers}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PersonPick">
+                                    <Border StrokeShape="RoundRectangle 18" Padding="16,9"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceAlt}, Dark={StaticResource SurfaceAltDark}}">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding PickPayerCommand, Source={RelativeSource AncestorType={x:Type vm:ExpenseEditorViewModel}}}"
+                                                CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Label Text="{Binding Name}" FontFamily="VazirmatnMedium" FontSize="14">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource OnPrimary}, Dark={StaticResource OnPrimaryDark}}" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </HorizontalStackLayout>
+                    </ScrollView>
+
+                    <!-- Description + date -->
+                    <Border Style="{StaticResource FieldCard}">
+                        <Entry Text="{Binding Description}" Placeholder="شرح (مثلاً: شام رستوران)" />
+                    </Border>
+                    <Border Style="{StaticResource FieldCard}" Padding="12,0">
+                        <Grid ColumnDefinitions="Auto,*" MinimumHeightRequest="48">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding OpenDatePickerCommand}" />
+                            </Grid.GestureRecognizers>
+                            <Label Grid.Column="0" Text="تاریخ:" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="{Binding DateText}" FontFamily="VazirmatnMedium"
+                                   VerticalOptions="Center" Margin="8,0,0,0" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Split -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="بین چه کسانی تقسیم شود؟" Style="{StaticResource SectionLabel}" VerticalOptions="Center" />
+                        <Border Grid.Column="1"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceAlt}, Dark={StaticResource SurfaceAltDark}}"
+                                StrokeShape="RoundRectangle 10" Padding="3">
+                            <HorizontalStackLayout Spacing="3">
+                                <Button Text="مساوی" FontSize="12" Padding="12,4" MinimumHeightRequest="32" CornerRadius="8"
+                                        Command="{Binding SetEqualSplitCommand}">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding IsCustomSplit}" Value="False">
+                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}" />
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Button" Binding="{Binding IsCustomSplit}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="Transparent" />
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                                <Button Text="دستی" FontSize="12" Padding="12,4" MinimumHeightRequest="32" CornerRadius="8"
+                                        Command="{Binding SetCustomSplitCommand}">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding IsCustomSplit}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}" />
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Button" Binding="{Binding IsCustomSplit}" Value="False">
+                                            <Setter Property="BackgroundColor" Value="Transparent" />
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                            </HorizontalStackLayout>
+                        </Border>
+                    </Grid>
+
+                    <Border Style="{StaticResource Card}" Padding="8,4">
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Sharers}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PersonPick">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" MinimumHeightRequest="48" ColumnSpacing="4">
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding ToggleSharerCommand, Source={RelativeSource AncestorType={x:Type vm:ExpenseEditorViewModel}}}"
+                                                CommandParameter="{Binding .}" />
+                                        </Grid.GestureRecognizers>
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" InputTransparent="True" />
+                                        <Label Grid.Column="1" Text="{Binding Name}" FontFamily="VazirmatnMedium" VerticalOptions="Center" />
+                                        <Border Grid.Column="2" WidthRequest="120" Padding="8,0"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceAlt}, Dark={StaticResource SurfaceAltDark}}"
+                                                StrokeShape="RoundRectangle 10"
+                                                IsVisible="{Binding IsCustomSplit, Source={RelativeSource AncestorType={x:Type vm:ExpenseEditorViewModel}}}">
+                                            <Entry Text="{Binding ShareText}"
+                                                   Keyboard="Numeric"
+                                                   FontSize="13"
+                                                   Placeholder="0"
+                                                   HorizontalTextAlignment="Center"
+                                                   IsEnabled="{Binding IsSelected}"
+                                                   TextChanged="OnShareTextChanged"
+                                                   MinimumHeightRequest="40" />
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="{Binding SplitHint}" Style="{StaticResource CaptionLabel}"
+                           IsVisible="{Binding HasSplitHint}" HorizontalTextAlignment="Center" />
+
+                    <Button Text="حذف هزینه"
+                            Style="{StaticResource DangerTextButton}"
+                            Command="{Binding DeleteCommand}"
+                            IsVisible="{Binding IsEditing}" />
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <Button Grid.Row="1" Text="ذخیره" Command="{Binding SaveCommand}" Margin="0,12,0,0" />
+        </Grid>
+
+        <!-- Jalali date picker overlay -->
+        <Grid IsVisible="{Binding IsDatePickerOpen}" BackgroundColor="#80000000">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseDatePickerCommand}" />
+            </Grid.GestureRecognizers>
+            <Border Style="{StaticResource Card}" VerticalOptions="Center" Margin="32,0" Padding="20">
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="انتخاب تاریخ" Style="{StaticResource SectionLabel}" HorizontalTextAlignment="Center" />
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                        <Picker Grid.Column="0" Title="روز"
+                                ItemsSource="{Binding Days}"
+                                SelectedIndex="{Binding SelectedDayIndex}"
+                                HorizontalTextAlignment="Center" />
+                        <Picker Grid.Column="1" Title="ماه"
+                                ItemsSource="{Binding Months}"
+                                SelectedIndex="{Binding SelectedMonthIndex}"
+                                HorizontalTextAlignment="Center" />
+                        <Picker Grid.Column="2" Title="سال"
+                                ItemsSource="{Binding Years}"
+                                SelectedIndex="{Binding SelectedYearIndex}"
+                                HorizontalTextAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Grid.Column="0" Text="تأیید" Command="{Binding ConfirmDateCommand}" />
+                        <Button Grid.Column="1" Text="انصراف" Style="{StaticResource SecondaryButton}" Command="{Binding CloseDatePickerCommand}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

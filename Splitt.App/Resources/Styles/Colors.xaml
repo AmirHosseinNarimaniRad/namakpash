@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ===== دنگ design system =====
+         Accent: teal. Semantic pairs are Light/Dark; use with AppThemeBinding. -->
+
+    <!-- Accent -->
+    <Color x:Key="Primary">#14B8A6</Color>
+    <Color x:Key="PrimaryDark">#2DD4BF</Color>
+    <Color x:Key="PrimarySoft">#CCFBF1</Color>
+    <Color x:Key="PrimarySoftDark">#134E48</Color>
+    <Color x:Key="OnPrimary">#FFFFFF</Color>
+    <Color x:Key="OnPrimaryDark">#04302B</Color>
+
+    <!-- Semantic: money -->
+    <Color x:Key="Creditor">#16A34A</Color>
+    <Color x:Key="CreditorDark">#4ADE80</Color>
+    <Color x:Key="CreditorSoft">#DCFCE7</Color>
+    <Color x:Key="CreditorSoftDark">#14532D</Color>
+    <Color x:Key="Debtor">#DC2626</Color>
+    <Color x:Key="DebtorDark">#F87171</Color>
+    <Color x:Key="DebtorSoft">#FEE2E2</Color>
+    <Color x:Key="DebtorSoftDark">#5B1A1A</Color>
+
+    <!-- Surfaces -->
+    <Color x:Key="Background">#F4F7F8</Color>
+    <Color x:Key="BackgroundDark">#0E1416</Color>
+    <Color x:Key="Surface">#FFFFFF</Color>
+    <Color x:Key="SurfaceDark">#1A2226</Color>
+    <Color x:Key="SurfaceAlt">#ECF1F3</Color>
+    <Color x:Key="SurfaceAltDark">#232D32</Color>
+    <Color x:Key="Divider">#E4EAEC</Color>
+    <Color x:Key="DividerDark">#2A363C</Color>
+
+    <!-- Text -->
+    <Color x:Key="TextPrimary">#17242A</Color>
+    <Color x:Key="TextPrimaryDark">#E9EEF0</Color>
+    <Color x:Key="TextSecondary">#5E7178</Color>
+    <Color x:Key="TextSecondaryDark">#93A6AD</Color>
+    <Color x:Key="TextHint">#8FA2A9</Color>
+    <Color x:Key="TextHintDark">#5E7178</Color>
+
+    <!-- Template compatibility (kept for MAUI defaults that reference them) -->
+    <Color x:Key="PrimaryDarkText">#04302B</Color>
+    <Color x:Key="Secondary">#CCFBF1</Color>
+    <Color x:Key="SecondaryDarkText">#2DD4BF</Color>
+    <Color x:Key="Tertiary">#0F766E</Color>
+    <Color x:Key="White">White</Color>
+    <Color x:Key="Black">Black</Color>
+    <Color x:Key="OffBlack">#1f1f1f</Color>
+    <Color x:Key="Gray100">#E1E1E1</Color>
+    <Color x:Key="Gray200">#C8C8C8</Color>
+    <Color x:Key="Gray300">#ACACAC</Color>
+    <Color x:Key="Gray400">#919191</Color>
+    <Color x:Key="Gray500">#6E6E6E</Color>
+    <Color x:Key="Gray600">#404040</Color>
+    <Color x:Key="Gray900">#212121</Color>
+    <Color x:Key="Gray950">#141414</Color>
+</ResourceDictionary>
