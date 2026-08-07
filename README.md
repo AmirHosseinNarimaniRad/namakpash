@@ -48,15 +48,25 @@ Money handling is the part of an app like this that is worth being strict about,
 | Storage | SQLite via `sqlite-net-pcl`, local file, fully offline |
 | Permissions | None — the release APK requests no Android permissions at all, including `INTERNET` |
 | MVVM | `CommunityToolkit.Mvvm` |
-| Tests | xUnit — 40 tests over the balance, settlement and report logic |
+| Tests | xUnit — 41 tests over the balance, settlement and report logic |
 | Font | [Vazirmatn](https://github.com/rastikerdar/vazirmatn) |
+
+## Download
+
+Signed APKs are attached to each [release](https://github.com/AmirHosseinNarimaniRad/namakpash/releases).
+Android 7.0 (API 24) or newer.
+
+Updates install over an existing copy without touching your data — the package id and signing key
+stay the same across releases, so never uninstall first.
 
 ## Project structure
 
 ```
 Splitt.Core/      # No MAUI dependency — runs and tests on the host
   Models/         # Trip, Participant, Expense, ExpenseShare
-  Services/       # EqualSplitter, BalanceCalculator, SettlementPlanner
+  Services/       # EqualSplitter, BalanceCalculator, SettlementPlanner,
+                  # ReportBuilder, ReportTextFormatter
+  Helpers/        # MoneyFormat, PersianDate (Jalali), Bidi (RTL text direction)
   Data/           # SplittDatabase (async sqlite-net-pcl repository)
   Export/         # JSON export / import with validation
 Splitt.Tests/     # xUnit tests for the money-critical logic
@@ -64,7 +74,7 @@ Splitt.App/       # .NET MAUI app, net10.0-android
   Resources/      # Design system (Colors.xaml, Styles.xaml), Vazirmatn font
   ViewModels/     # Trips, TripEditor, TripDetail, ExpenseEditor
   Views/          # Matching XAML pages
-  Helpers/        # MoneyFormat, PersianDate (Jalali), converters
+  Helpers/        # Value converters
 ```
 
 The data and logic layer is a plain class library with no UI dependency, which is what lets the
@@ -77,6 +87,9 @@ correctness-critical code be unit tested without an emulator.
   deliberate choice, as they are easier to scan for amounts.
 - **Dates** are stored as Gregorian UTC and only converted to Jalali for display, via .NET's
   built-in `PersianCalendar`.
+- **Text direction** is forced right-to-left on any line that can begin with user-entered text
+  (`Bidi.Rtl`). Without it, a Persian sentence starting with a Latin name is laid out
+  left-to-right and reads reversed — "Sara pays Amir" becomes "Amir pays Sara".
 
 ## Building
 
