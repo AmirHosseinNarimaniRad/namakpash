@@ -34,7 +34,7 @@ public class BalanceCalculatorTests
     [Fact]
     public void SingleEqualExpense_PayerIsCreditor()
     {
-        // امیر pays 90,000 split equally 3 ways.
+        // Amir pays 90,000 split equally 3 ways.
         var (e, s) = MakeExpense(1, paidBy: 1, amount: 90_000, (1, 30_000), (2, 30_000), (3, 30_000));
 
         var net = BalanceCalculator.ComputeNet(People, [e], s);
@@ -93,10 +93,10 @@ public class BalanceCalculatorTests
     [Fact]
     public void Settlement_AsExpense_ZeroesTheDebt()
     {
-        // سارا owes امیر 30,000 after e1.
+        // Sara owes Amir 30,000 after e1.
         var (e1, s1) = MakeExpense(1, paidBy: 1, amount: 60_000, (1, 30_000), (2, 30_000));
 
-        // Settlement: سارا (debtor) pays; امیر (creditor) holds the whole share.
+        // Settlement: Sara (debtor) pays; Amir (creditor) holds the whole share.
         var (settle, settleShares) = MakeExpense(2, paidBy: 2, amount: 30_000, (1, 30_000));
         settle.IsSettlement = true;
 

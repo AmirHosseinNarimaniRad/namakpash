@@ -1,9 +1,10 @@
-# نمک‌پاش — NamakPash
+# NamakPash
 
 A minimal, fully offline expense-splitting app for Android (a small, personal Splitwise), built with .NET MAUI and C#.
 Persian (Farsi) UI with full right-to-left layout, Toman amounts, and Jalali dates.
 
-> **نمک‌پاش** — اپلیکیشن ساده و آفلاین تقسیم هزینه‌های سفر و دورهمی. بدون حساب کاربری، بدون اینترنت، بدون سرور.
+> The name — *NamakPash* ("salt shaker") — is a Persian expression for splitting a shared bill.
+> The app's own interface is entirely in Persian; this repository is documented in English.
 
 ---
 

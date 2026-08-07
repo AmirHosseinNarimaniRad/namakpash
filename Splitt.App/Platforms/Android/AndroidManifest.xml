@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true"></application>
-	<!-- بدون هیچ دسترسی شبکه‌ای — برنامه کاملاً آفلاین است.
-	     INTERNET فقط در بیلد Debug و از طریق AndroidManifestOverlay.Debug.xml اضافه می‌شود. -->
+	<!-- No network permissions: the app is fully offline.
+	     INTERNET is added for Debug builds only, via AndroidManifestOverlay.Debug.xml. -->
 </manifest>
