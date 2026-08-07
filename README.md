@@ -17,6 +17,11 @@ Persian (Farsi) UI with full right-to-left layout, Toman amounts, and Jalali dat
 - **Settle up** — a greedy debt-simplification algorithm proposes the shortest list of
   "X pays Y amount Z" transactions (at most *n − 1* for *n* people).
 - **Record a settlement** — stored as a flagged expense, so the balance math never needs a special case.
+- **Report** — a per-person breakdown of the whole trip: what each person paid and what their
+  share was, expense by expense, plus the trip total and per-person average. Every expense card
+  also lists each participant's share at a glance.
+- **Share as text** — one tap turns the report into a chat-ready Persian text message
+  (totals, per-person summary, itemized statement, settlements) via the Android share sheet.
 - **Backup** — export a trip to JSON via the share sheet, import it back on any device.
 - **Dark mode** and a consistent card-based design system.
 
@@ -40,8 +45,9 @@ Money handling is the part of an app like this that is worth being strict about,
 | Framework | .NET 10 · .NET MAUI (Android only) |
 | Language | C# |
 | Storage | SQLite via `sqlite-net-pcl`, local file, fully offline |
+| Permissions | None — the release APK requests no Android permissions at all, including `INTERNET` |
 | MVVM | `CommunityToolkit.Mvvm` |
-| Tests | xUnit — 30 tests over the balance and settlement logic |
+| Tests | xUnit — 40 tests over the balance, settlement and report logic |
 | Font | [Vazirmatn](https://github.com/rastikerdar/vazirmatn) |
 
 ## Project structure

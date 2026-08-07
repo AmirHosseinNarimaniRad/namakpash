@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Splitt.App.Helpers;
+namespace Splitt.Core.Helpers;
 
 /// <summary>Jalali (Shamsi) calendar display with English digits. Storage stays Gregorian.</summary>
 public static class PersianDate

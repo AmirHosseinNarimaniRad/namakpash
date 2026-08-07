@@ -25,8 +25,8 @@
 		<ApplicationId>ir.narimani.splitt</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>1</ApplicationVersion>
+		<ApplicationDisplayVersion>1.1</ApplicationDisplayVersion>
+		<ApplicationVersion>2</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>None</WindowsPackageType>
@@ -50,6 +50,12 @@
 
 		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<!-- The app is fully offline: no network permissions ship in Release.
+	     Debug deployment / hot reload still needs INTERNET, so it is merged in only there. -->
+	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+		<AndroidManifestOverlay Include="Platforms\Android\AndroidManifestOverlay.Debug.xml" />
 	</ItemGroup>
 
 	<ItemGroup>

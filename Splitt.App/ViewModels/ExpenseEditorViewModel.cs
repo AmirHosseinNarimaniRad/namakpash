@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Splitt.App.Helpers;
+using Splitt.Core.Helpers;
 using Splitt.Core.Data;
 using Splitt.Core.Models;
 using Splitt.Core.Services;

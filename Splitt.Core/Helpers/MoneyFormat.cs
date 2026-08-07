@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Splitt.App.Helpers;
+namespace Splitt.Core.Helpers;
 
 public static class MoneyFormat
 {
