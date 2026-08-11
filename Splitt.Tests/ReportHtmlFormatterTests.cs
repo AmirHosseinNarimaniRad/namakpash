@@ -51,31 +51,64 @@ public class ReportHtmlFormatterTests
     }
 
     [Fact]
-    public void EveryPersonGetsTheirShareItemisedWithDateAndTime()
+    public void Matrix_GivesEveryPersonAColumnAndEveryExpenseARow()
     {
-        var (people, expenses, shares) = Trip(2);
+        var (people, expenses, shares) = Trip(3);
         expenses[0].Description = "رستوران";
-        expenses[0].DateUtc = new DateTime(2026, 8, 2, 9, 30, 0, DateTimeKind.Utc);
 
         var (html, _) = ReportHtmlFormatter.Format("سفر", people, expenses, shares, Generated);
 
-        Assert.Contains("ریز سهم هر نفر", html);
-        // Both sharers are listed, and the expense appears once under each of them.
+        Assert.Contains("سهم هر نفر از هر هزینه", html);
         foreach (var person in people)
-            Assert.Contains(person.Name, html);
-        Assert.True(Occurrences(html, "رستوران") >= people.Count);
-
-        var local = expenses[0].DateUtc.ToLocalTime();
-        Assert.Contains(local.ToString("HH:mm"), html);
+            Assert.Contains($">{person.Name}</th>", html);
+        Assert.Contains("مبلغ کل", html);
+        Assert.Contains("مجموع سهم", html);
     }
 
     [Fact]
-    public void SettlementsStayOutOfThePerPersonBreakdown()
+    public void Matrix_MarksANonParticipantWithADashRatherThanAZero()
+    {
+        var (people, expenses, shares) = Trip(1);
+        // Only person 1 shares this expense; person 2 sat it out.
+        shares.RemoveAll(s => s.ParticipantId == 2);
+
+        var (html, _) = ReportHtmlFormatter.Format("سفر", people, expenses, shares, Generated);
+
+        Assert.Contains("—", html);
+    }
+
+    [Fact]
+    public void Matrix_TintsThePayersOwnCell()
+    {
+        var (people, expenses, shares) = Trip(1);
+
+        var (html, _) = ReportHtmlFormatter.Format("سفر", people, expenses, shares, Generated);
+
+        Assert.Contains("num payer", html);
+    }
+
+    [Fact]
+    public void Matrix_SplitsIntoGroupsRatherThanShrinkingColumns()
+    {
+        var people = Enumerable.Range(1, 7)
+            .Select(i => new Participant { Id = i, TripId = 1, Name = $"P{i}" })
+            .ToList();
+        var (_, expenses, shares) = Trip(2);
+
+        var (html, _) = ReportHtmlFormatter.Format("سفر", people, expenses, shares, Generated);
+
+        // 7 people => groups of 5 and 2, so the matrix header appears twice.
+        Assert.Equal(2, Occurrences(html, "مبلغ کل"));
+        Assert.Equal(2, Occurrences(html, "مجموع سهم"));
+    }
+
+    [Fact]
+    public void SettlementsStayOutOfTheMatrix()
     {
         var (people, expenses, shares) = Trip(1);
         expenses.Add(new Expense
         {
-            Id = 99, TripId = 1, Description = "تسویه", Amount = 50_000,
+            Id = 99, TripId = 1, Description = "بازپرداخت", Amount = 50_000,
             PaidById = 2, IsSettlement = true,
             DateUtc = new DateTime(2026, 8, 9, 12, 0, 0, DateTimeKind.Utc),
         });
@@ -83,9 +116,10 @@ public class ReportHtmlFormatterTests
 
         var (html, _) = ReportHtmlFormatter.Format("سفر", people, expenses, shares, Generated);
 
-        // "تسویه" belongs in its own section, not in anyone's list of what they owe.
-        Assert.Equal(1, Occurrences(html, "تسویه‌های ثبت‌شده"));
-        Assert.DoesNotContain("<td class=\"r\" width=\"44%\">تسویه</td>", html);
+        // Only matrix rows carry a .desc cell, so counting them counts the grid's rows:
+        // the one real expense, never the settlement.
+        Assert.Equal(1, Occurrences(html, "<span class=\"desc\">"));
+        Assert.Contains("تسویه‌های ثبت‌شده", html);
     }
 
     [Fact]

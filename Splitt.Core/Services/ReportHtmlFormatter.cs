@@ -26,19 +26,23 @@ public static class ReportHtmlFormatter
     private const int RowHeight = 26;
     private const int SpacerHeight = 16;
 
-    /// <summary>A person's name and their column headings, kept in one block so that a
-    /// breakdown continuing onto the next page repeats both — headings alone would leave
-    /// the reader unable to tell whose rows they are looking at.</summary>
-    private const int PersonHeadHeight = HeadRowHeight + 34;
+    /// <summary>Beyond this many people per table the amounts stop fitting the page width,
+    /// so the matrix repeats for the next group rather than shrinking its columns.</summary>
+    private const int MaxMatrixColumns = 5;
+
+    private const int MatrixHeadHeight = 30;
+    private const int MatrixRowHeight = 34;   // description over its date, so two lines
+    private const int MatrixTotalsHeight = 30;
+    private const int CaptionHeight = 18;
 
     // Column widths as percentages of the 515px content width.
     private static readonly int[] People = [34, 22, 22, 22];
     private static readonly int[] Expenses = [32, 22, 20, 26];
     private static readonly int[] Settlements = [26, 26, 22, 26];
     private static readonly int[] Suggestions = [38, 38, 24];
-    private static readonly int[] PersonItems = [30, 44, 26];
 
-    private sealed record Block(string Html, int Height, bool StartsSection = false, bool IsHead = false);
+    private sealed record Block(
+        string Html, int Height, bool StartsSection = false, bool IsHead = false, bool Body = false);
 
     public static (string Html, int PageCount) Format(
         string tripName,
@@ -76,7 +80,7 @@ public static class ReportHtmlFormatter
             blocks.Add(new Block(
                 Row([Text(p.Name), Number(Money(p.Paid)), Number(Money(p.Owed)), status],
                     ["right", "left", "left", "left"], People),
-                RowHeight));
+                RowHeight, Body: true));
         }
 
         // --- expenses ---
@@ -97,33 +101,44 @@ public static class ReportHtmlFormatter
                         Text(names.GetValueOrDefault(e.PaidById, "؟")),
                         Number(Money(e.Amount)),
                     ], ["right", "left", "right", "left"], Expenses),
-                    RowHeight));
+                    RowHeight, Body: true));
             }
         }
 
-        // --- where each person's share total actually came from ---
-        var withShares = report.People.Where(p => p.ShareItems.Count > 0).ToList();
-        if (withShares.Count > 0)
+        // --- who owed what, expense by expense: one row per expense, one column per person ---
+        if (realExpenses.Count > 0 && participants.Count > 0)
         {
-            blocks.Add(new Block(Spacer(), SpacerHeight));
-            blocks.Add(new Block(SectionTitle("ریز سهم هر نفر"), TitleHeight, StartsSection: true));
-            foreach (var p in withShares)
+            var shareOf = new Dictionary<(int Expense, int Participant), decimal>();
+            foreach (var s in shares)
             {
+                var key = (s.ExpenseId, s.ParticipantId);
+                shareOf[key] = shareOf.GetValueOrDefault(key) + s.Share;
+            }
+
+            // Columns are chunked so nothing has to shrink: past five people the amounts
+            // stop fitting the page width, so the table repeats for the next group instead.
+            var groups = participants.Chunk(MaxMatrixColumns).ToList();
+
+            blocks.Add(new Block(Spacer(), SpacerHeight));
+            blocks.Add(new Block(SectionTitle("سهم هر نفر از هر هزینه"), TitleHeight, StartsSection: true));
+
+            for (var g = 0; g < groups.Count; g++)
+            {
+                var group = groups[g];
+                if (g > 0)
+                    blocks.Add(new Block(Spacer(), SpacerHeight));
+
                 blocks.Add(new Block(
-                    PersonHead(p.Name, Money(p.Owed)),
-                    PersonHeadHeight,
-                    StartsSection: true,
-                    IsHead: true));
-                foreach (var item in p.ShareItems)
-                {
-                    blocks.Add(new Block(
-                        Row([
-                            Number(PersianDate.ToDisplayWithTime(item.DateUtc.ToLocalTime())),
-                            Text(item.Description.Length > 0 ? item.Description : "بدون شرح"),
-                            Number(Money(item.Amount)),
-                        ], ["right", "right", "left"], PersonItems),
-                        RowHeight));
-                }
+                    MatrixHead(group), MatrixHeadHeight, StartsSection: true, IsHead: true));
+
+                foreach (var e in realExpenses)
+                    blocks.Add(new Block(MatrixRow(e, group, shareOf), MatrixRowHeight, Body: true));
+
+                var last = g == groups.Count - 1;
+                blocks.Add(new Block(
+                    MatrixTotals(group, realExpenses, shareOf, last),
+                    last ? MatrixTotalsHeight + CaptionHeight : MatrixTotalsHeight,
+                    Body: true));
             }
         }
 
@@ -147,7 +162,7 @@ public static class ReportHtmlFormatter
                         Number(PersianDate.ToDisplay(e.DateUtc.ToLocalTime())),
                         Number(Money(e.Amount)),
                     ], ["right", "right", "left", "left"], Settlements),
-                    RowHeight));
+                    RowHeight, Body: true));
             }
         }
 
@@ -169,7 +184,7 @@ public static class ReportHtmlFormatter
                         Text(names.GetValueOrDefault(s.ToParticipantId, "؟")),
                         Number(Money(s.Amount)),
                     ], ["right", "right", "left"], Suggestions),
-                    RowHeight));
+                    RowHeight, Body: true));
             }
         }
 
@@ -207,7 +222,7 @@ public static class ReportHtmlFormatter
                 used = 0;
 
                 // Mid-table break: carry the column headings over so the rows stay readable.
-                if (block.Height == RowHeight && openHead is not null)
+                if (block.Body && openHead is not null)
                 {
                     current.Add(openHead);
                     used += openHead.Height;
@@ -284,10 +299,19 @@ public static class ReportHtmlFormatter
         .debit { background: #FDEAEA; color: #A32020; }
         .settled { background: #EEF3F2; color: #6C8B88; }
         .spacer { height: 16px; }
-        .person { height: 34px; display: flex; justify-content: space-between; align-items: center;
-                  border-right: 3px solid #14B8A6; padding: 0 8px 0 0; margin-top: 4px; }
-        .person .who { font-size: 12px; font-weight: 700; }
-        .person .sum { font-size: 10px; color: #6C8B88; }
+        table.grid td, table.grid th { padding: 0 4px; font-size: 9.5px; }
+        table.grid td { height: 34px; }
+        table.grid tr.headrow th { height: 30px; }
+        .desc { display: block; font-size: 10px; font-weight: 700; line-height: 1.3; }
+        .when { display: block; font-size: 8px; color: #6C8B88; direction: ltr;
+                text-align: right; line-height: 1.25; }
+        .payer { background: #E8F8F5; font-weight: 700; }
+        tr.totals td { height: 30px; font-weight: 700; border-top: 2px solid #14B8A6;
+                       border-bottom: none; }
+        .caption { height: 18px; font-size: 8px; color: #6C8B88; display: flex; gap: 12px;
+                   align-items: center; }
+        .chip { display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+                background: #E8F8F5; border: 1px solid #B9E9E3; }
         """;
 
     private static string Header(
@@ -306,12 +330,74 @@ public static class ReportHtmlFormatter
 
     private static string SectionTitle(string text) => $"<h2>{text}</h2>";
 
-    /// <summary>A person's name with their share total, above that person's column headings.</summary>
-    private static string PersonHead(string name, string total) =>
-        $"""
-        <div class="person"><span class="who">{Escape(name)}</span>
-        <span class="sum">مجموع سهم: <span class="num">{total}</span></span></div>
-        """ + TableHead(["تاریخ", "شرح", "سهم"], ["right", "right", "left"], PersonItems);
+    /// <summary>Percent widths for a matrix of <paramref name="people"/> columns.</summary>
+    private static (int Desc, int Person, int Total) MatrixWidths(int people) =>
+        (25, 60 / people, 100 - 25 - 60 / people * people);
+
+    private static string MatrixHead(Participant[] group)
+    {
+        var (desc, person, total) = MatrixWidths(group.Length);
+        var sb = new StringBuilder($"<table class=\"grid\"><tr class=\"headrow\">");
+        sb.Append($"<th class=\"r\" width=\"{desc}%\">شرح و تاریخ</th>");
+        foreach (var p in group)
+            sb.Append($"<th class=\"l\" width=\"{person}%\">{Escape(p.Name)}</th>");
+        return sb.Append($"<th class=\"l\" width=\"{total}%\">مبلغ کل</th></tr></table>").ToString();
+    }
+
+    private static string MatrixRow(
+        Expense expense, Participant[] group, Dictionary<(int, int), decimal> shareOf)
+    {
+        var (desc, person, total) = MatrixWidths(group.Length);
+        var description = expense.Description.Length > 0 ? expense.Description : "بدون شرح";
+
+        var sb = new StringBuilder("<table class=\"grid\"><tr>");
+        sb.Append($"""
+            <td class="r" width="{desc}%"><span class="desc">{Escape(description)}</span>
+            <span class="when">{PersianDate.ToDisplayWithTime(expense.DateUtc.ToLocalTime())}</span></td>
+            """);
+
+        foreach (var p in group)
+        {
+            // No share row at all means this person sat the expense out — a dash says that
+            // outright, where a zero would read as "took part, owed nothing".
+            var cell = shareOf.TryGetValue((expense.Id, p.Id), out var share)
+                ? Money(share)
+                : "—";
+            var paid = expense.PaidById == p.Id ? " payer" : "";
+            sb.Append($"<td class=\"l num{paid}\" width=\"{person}%\">{cell}</td>");
+        }
+
+        return sb.Append($"<td class=\"l num\" width=\"{total}%\">{Money(expense.Amount)}</td></tr></table>")
+            .ToString();
+    }
+
+    private static string MatrixTotals(
+        Participant[] group,
+        List<Expense> expenses,
+        Dictionary<(int, int), decimal> shareOf,
+        bool withCaption)
+    {
+        var (desc, person, total) = MatrixWidths(group.Length);
+        var sb = new StringBuilder("<table class=\"grid\"><tr class=\"totals\">");
+        sb.Append($"<td class=\"r\" width=\"{desc}%\">مجموع سهم</td>");
+
+        foreach (var p in group)
+        {
+            var sum = expenses.Sum(e => shareOf.GetValueOrDefault((e.Id, p.Id)));
+            sb.Append($"<td class=\"l num\" width=\"{person}%\">{Money(sum)}</td>");
+        }
+
+        sb.Append($"<td class=\"l num\" width=\"{total}%\">{Money(expenses.Sum(e => e.Amount))}</td>");
+        sb.Append("</tr></table>");
+
+        if (withCaption)
+            sb.Append("""
+                <div class="caption"><span><span class="chip"></span> خانهٔ رنگی: پرداخت‌کنندهٔ آن هزینه</span>
+                <span>— : در آن هزینه شریک نبوده</span></div>
+                """);
+
+        return sb.ToString();
+    }
 
     private static string Spacer() => "<div class=\"spacer\"></div>";
 
