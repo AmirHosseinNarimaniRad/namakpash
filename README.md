@@ -90,6 +90,10 @@ Splitt.App/       # .NET MAUI app, net10.0-android
 The data and logic layer is a plain class library with no UI dependency, which is what lets the
 correctness-critical code be unit tested without an emulator.
 
+[`SPEC.md`](SPEC.md) documents the whole app end to end — the rules, algorithms, screens, report
+layout, rendering pipeline and the traps behind them — in enough detail to rebuild it from an
+empty folder.
+
 ## Design notes
 
 - **Accent** teal `#14B8A6`; creditors green, debtors red; 4/8/12/16/24 spacing scale; 16 px rounded cards.
