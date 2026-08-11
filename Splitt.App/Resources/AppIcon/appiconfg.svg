@@ -1,5 +1,29 @@
 <svg width="456" height="456" viewBox="0 0 456 456" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="228" cy="132" r="38" fill="white"/>
-  <rect x="104" y="206" width="248" height="44" rx="22" fill="white"/>
-  <circle cx="228" cy="324" r="38" fill="white"/>
+  <!-- A salt shaker pouring, the grains forking into two bowls: the app's own job.
+       The cap holes are filled with the background teal rather than left transparent,
+       so changing MauiIcon's Color means changing them here too.
+
+       The 0.86 scale is what keeps the mask off the artwork. Android's guaranteed safe
+       area is a *circle* of 66 of the 108dp canvas - radius 139 here - not a square, so
+       wide shapes low in the frame (the bowls) are the first thing a round mask clips.
+       Unscaled they reach radius 154 and lose their outer edges. -->
+  <g fill="#FFFFFF" transform="translate(228 228) scale(0.86) translate(-228 -228)">
+    <!-- 160 deg, not -24: the shaker is drawn upright, so it has to be turned past
+         vertical to point its perforated cap down at the bowls. Base up, mouth down. -->
+    <g transform="rotate(160 228 150)">
+      <rect x="194" y="88" width="68" height="38" rx="18"/>
+      <rect x="203" y="122" width="50" height="16"/>
+      <path d="M196 134 H260 L270 192 Q272 210 254 210 H202 Q184 210 186 192 Z"/>
+      <circle cx="211" cy="108" r="5.5" fill="#14B8A6"/>
+      <circle cx="228" cy="103" r="5.5" fill="#14B8A6"/>
+      <circle cx="245" cy="108" r="5.5" fill="#14B8A6"/>
+    </g>
+    <circle cx="243" cy="238" r="9"/>
+    <circle cx="214" cy="268" r="8"/>
+    <circle cx="274" cy="266" r="8"/>
+    <circle cx="190" cy="294" r="7"/>
+    <circle cx="298" cy="292" r="7"/>
+    <path d="M108 306 h100 a50 50 0 0 1 -100 0 z"/>
+    <path d="M248 306 h100 a50 50 0 0 1 -100 0 z"/>
+  </g>
 </svg>

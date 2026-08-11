@@ -38,8 +38,8 @@
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#14B8A6" />
 
-		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\AppIcon\appiconfg.svg" Color="#14B8A6" BaseSize="128,128" />
+		<!-- Splash Screen: mark plus wordmark, so it is its own file rather than the icon -->
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#14B8A6" BaseSize="180,180" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
