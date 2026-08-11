@@ -285,16 +285,20 @@ public partial class TripDetailViewModel : ObservableObject
         if (trip is null)
             return;
 
-        var text = ReportTextFormatter.Format(
-            trip.Name,
-            _participants,
-            await _db.GetExpensesAsync(TripId),
-            await _db.GetSharesForTripAsync(TripId));
+        var expenses = await _db.GetExpensesAsync(TripId);
+        var shares = await _db.GetSharesForTripAsync(TripId);
 
-        await Share.Default.RequestAsync(new ShareTextRequest
+        var (html, pageCount) = ReportHtmlFormatter.Format(
+            trip.Name, _participants, expenses, shares, DateTime.Now, "file:///android_asset/");
+
+        // Cache, not documents: the PDF is a throwaway the share sheet hands on.
+        var path = Path.Combine(FileSystem.CacheDirectory, $"{FileName(trip.Name)}.pdf");
+        await HtmlToPdf.RenderAsync(html, pageCount, path);
+
+        await Share.Default.RequestAsync(new ShareFileRequest
         {
             Title = $"گزارش سفر «{trip.Name}»",
-            Text = text,
+            File = new ShareFile(path),
         });
     }
 
@@ -311,8 +315,7 @@ public partial class TripDetailViewModel : ObservableObject
             await _db.GetExpensesAsync(TripId),
             await _db.GetSharesForTripAsync(TripId));
 
-        var safeName = string.Join("_", trip.Name.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
-        var path = Path.Combine(FileSystem.CacheDirectory, $"splitt-{safeName}.json");
+        var path = Path.Combine(FileSystem.CacheDirectory, $"splitt-{FileName(trip.Name)}.json");
         await File.WriteAllTextAsync(path, json);
 
         await Share.Default.RequestAsync(new ShareFileRequest
@@ -321,4 +324,7 @@ public partial class TripDetailViewModel : ObservableObject
             File = new ShareFile(path),
         });
     }
+
+    private static string FileName(string tripName) => string.Join(
+        "_", tripName.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
 }
