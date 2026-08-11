@@ -24,9 +24,14 @@ Persian (Farsi) UI with full right-to-left layout, Toman amounts, and Jalali dat
   share was, expense by expense, plus the trip total and per-person average. Every expense card
   also lists each participant's share at a glance.
 - **Share as PDF** — one tap renders the report as an A4 PDF and hands it to the Android share
-  sheet: trip header, totals, a per-person table, the itemized statement, recorded settlements and
-  the transfers still outstanding, paginated with repeating table headers. Generated on-device with
-  no PDF library and no network.
+  sheet: trip header, totals, a per-person summary, the itemized statement, recorded settlements and
+  the transfers still outstanding. Paginated properly, with table headings repeated when a table
+  continues onto the next page. Generated on-device with no PDF library and no network.
+- **Expense matrix** — the heart of the report: one row per expense, one column per person, each
+  cell that person's share. A dash marks someone who sat an expense out; the payer's own cell is
+  tinted. Every column totals to that person's share and every row to the expense amount, so the
+  report reconciles against itself. Past five people the columns are split into a second table
+  rather than shrunk, so nothing is ever truncated.
 - **Backup** — export a trip to JSON via the share sheet, import it back on any device.
 - **Dark mode** and a consistent card-based design system.
 
@@ -52,7 +57,7 @@ Money handling is the part of an app like this that is worth being strict about,
 | Storage | SQLite via `sqlite-net-pcl`, local file, fully offline |
 | Permissions | None — the release APK requests no Android permissions at all, including `INTERNET` |
 | MVVM | `CommunityToolkit.Mvvm` |
-| Tests | xUnit — 58 tests over the balance, settlement, report and date logic |
+| Tests | xUnit — 63 tests over the balance, settlement, report and date logic |
 | Font | [Vazirmatn](https://github.com/rastikerdar/vazirmatn) |
 
 ## Download
