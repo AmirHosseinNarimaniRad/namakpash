@@ -12,7 +12,9 @@ Persian (Farsi) UI with full right-to-left layout, Toman amounts, and Jalali dat
 
 - **Trips** — create a trip and add participants by name. No accounts, no login, no sync.
 - **Expenses** — record who paid, how much, a description, the date, and who shares the cost.
-  Split equally by default, or enter custom unequal amounts per person.
+  Split equally by default, or enter custom unequal amounts per person. The time of entry is kept
+  alongside the date, so same-day expenses stay in the order you added them, newest first. The date
+  picker has a **Today** shortcut.
 - **Edit & delete** — balances always recompute from the expense list; nothing is cached.
 - **Balances** — each person's net position (creditor / debtor) with color coding and a proportional bar.
 - **Settle up** — a greedy debt-simplification algorithm proposes the shortest list of
@@ -21,8 +23,10 @@ Persian (Farsi) UI with full right-to-left layout, Toman amounts, and Jalali dat
 - **Report** — a per-person breakdown of the whole trip: what each person paid and what their
   share was, expense by expense, plus the trip total and per-person average. Every expense card
   also lists each participant's share at a glance.
-- **Share as text** — one tap turns the report into a chat-ready Persian text message
-  (totals, per-person summary, itemized statement, settlements) via the Android share sheet.
+- **Share as PDF** — one tap renders the report as an A4 PDF and hands it to the Android share
+  sheet: trip header, totals, a per-person table, the itemized statement, recorded settlements and
+  the transfers still outstanding, paginated with repeating table headers. Generated on-device with
+  no PDF library and no network.
 - **Backup** — export a trip to JSON via the share sheet, import it back on any device.
 - **Dark mode** and a consistent card-based design system.
 
@@ -48,7 +52,7 @@ Money handling is the part of an app like this that is worth being strict about,
 | Storage | SQLite via `sqlite-net-pcl`, local file, fully offline |
 | Permissions | None — the release APK requests no Android permissions at all, including `INTERNET` |
 | MVVM | `CommunityToolkit.Mvvm` |
-| Tests | xUnit — 41 tests over the balance, settlement and report logic |
+| Tests | xUnit — 58 tests over the balance, settlement, report and date logic |
 | Font | [Vazirmatn](https://github.com/rastikerdar/vazirmatn) |
 
 ## Download
@@ -65,7 +69,7 @@ stay the same across releases, so never uninstall first.
 Splitt.Core/      # No MAUI dependency — runs and tests on the host
   Models/         # Trip, Participant, Expense, ExpenseShare
   Services/       # EqualSplitter, BalanceCalculator, SettlementPlanner,
-                  # ReportBuilder, ReportTextFormatter
+                  # ReportBuilder, ReportHtmlFormatter (report layout + pagination)
   Helpers/        # MoneyFormat, PersianDate (Jalali), Bidi (RTL text direction)
   Data/           # SplittDatabase (async sqlite-net-pcl repository)
   Export/         # JSON export / import with validation
@@ -75,6 +79,7 @@ Splitt.App/       # .NET MAUI app, net10.0-android
   ViewModels/     # Trips, TripEditor, TripDetail, ExpenseEditor
   Views/          # Matching XAML pages
   Helpers/        # Value converters
+  Platforms/      # Android: HtmlToPdf (WebView -> PdfDocument canvas)
 ```
 
 The data and logic layer is a plain class library with no UI dependency, which is what lets the
@@ -90,6 +95,9 @@ correctness-critical code be unit tested without an emulator.
 - **Text direction** is forced right-to-left on any line that can begin with user-entered text
   (`Bidi.Rtl`). Without it, a Persian sentence starting with a Latin name is laid out
   left-to-right and reads reversed — "Sara pays Amir" becomes "Amir pays Sara".
+  A second, unrelated case: two numbers separated by a space (a date and a time) are each laid out
+  left-to-right, but the space between them takes the paragraph direction, so they swap. Such a run
+  is wrapped in a directional isolate (`Bidi.Ltr`).
 
 ## Building
 
@@ -129,7 +137,7 @@ The signed APK lands in `Splitt.App/bin/Release/net10.0-android/publish/`.
 ## Installing on a phone
 
 ```bash
-adb install namakpash-v1.0.apk
+adb install namakpash-v1.2.apk
 ```
 
 Or copy the APK to the phone, tap it in a file manager, and allow installation from unknown sources
