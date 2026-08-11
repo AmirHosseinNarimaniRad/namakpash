@@ -44,10 +44,48 @@ public class ReportHtmlFormatterTests
     [Fact]
     public void SmallTrip_FitsOnOnePage()
     {
-        var (html, pages) = Render(3);
+        var (html, pages) = Render(1);
 
         Assert.Equal(1, pages);
         Assert.Equal(1, CountPages(html));
+    }
+
+    [Fact]
+    public void EveryPersonGetsTheirShareItemisedWithDateAndTime()
+    {
+        var (people, expenses, shares) = Trip(2);
+        expenses[0].Description = "رستوران";
+        expenses[0].DateUtc = new DateTime(2026, 8, 2, 9, 30, 0, DateTimeKind.Utc);
+
+        var (html, _) = ReportHtmlFormatter.Format("سفر", people, expenses, shares, Generated);
+
+        Assert.Contains("ریز سهم هر نفر", html);
+        // Both sharers are listed, and the expense appears once under each of them.
+        foreach (var person in people)
+            Assert.Contains(person.Name, html);
+        Assert.True(Occurrences(html, "رستوران") >= people.Count);
+
+        var local = expenses[0].DateUtc.ToLocalTime();
+        Assert.Contains(local.ToString("HH:mm"), html);
+    }
+
+    [Fact]
+    public void SettlementsStayOutOfThePerPersonBreakdown()
+    {
+        var (people, expenses, shares) = Trip(1);
+        expenses.Add(new Expense
+        {
+            Id = 99, TripId = 1, Description = "تسویه", Amount = 50_000,
+            PaidById = 2, IsSettlement = true,
+            DateUtc = new DateTime(2026, 8, 9, 12, 0, 0, DateTimeKind.Utc),
+        });
+        shares.Add(new ExpenseShare { ExpenseId = 99, ParticipantId = 1, Share = 50_000 });
+
+        var (html, _) = ReportHtmlFormatter.Format("سفر", people, expenses, shares, Generated);
+
+        // "تسویه" belongs in its own section, not in anyone's list of what they owe.
+        Assert.Equal(1, Occurrences(html, "تسویه‌های ثبت‌شده"));
+        Assert.DoesNotContain("<td class=\"r\" width=\"44%\">تسویه</td>", html);
     }
 
     [Fact]

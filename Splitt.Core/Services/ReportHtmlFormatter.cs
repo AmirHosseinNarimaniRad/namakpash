@@ -26,11 +26,17 @@ public static class ReportHtmlFormatter
     private const int RowHeight = 26;
     private const int SpacerHeight = 16;
 
+    /// <summary>A person's name and their column headings, kept in one block so that a
+    /// breakdown continuing onto the next page repeats both — headings alone would leave
+    /// the reader unable to tell whose rows they are looking at.</summary>
+    private const int PersonHeadHeight = HeadRowHeight + 34;
+
     // Column widths as percentages of the 515px content width.
     private static readonly int[] People = [34, 22, 22, 22];
-    private static readonly int[] Expenses = [36, 18, 22, 24];
+    private static readonly int[] Expenses = [32, 22, 20, 26];
     private static readonly int[] Settlements = [26, 26, 22, 26];
     private static readonly int[] Suggestions = [38, 38, 24];
+    private static readonly int[] PersonItems = [30, 44, 26];
 
     private sealed record Block(string Html, int Height, bool StartsSection = false, bool IsHead = false);
 
@@ -87,11 +93,37 @@ public static class ReportHtmlFormatter
                 blocks.Add(new Block(
                     Row([
                         Text(description),
-                        Number(PersianDate.ToDisplay(e.DateUtc.ToLocalTime())),
+                        Number(PersianDate.ToDisplayWithTime(e.DateUtc.ToLocalTime())),
                         Text(names.GetValueOrDefault(e.PaidById, "؟")),
                         Number(Money(e.Amount)),
                     ], ["right", "left", "right", "left"], Expenses),
                     RowHeight));
+            }
+        }
+
+        // --- where each person's share total actually came from ---
+        var withShares = report.People.Where(p => p.ShareItems.Count > 0).ToList();
+        if (withShares.Count > 0)
+        {
+            blocks.Add(new Block(Spacer(), SpacerHeight));
+            blocks.Add(new Block(SectionTitle("ریز سهم هر نفر"), TitleHeight, StartsSection: true));
+            foreach (var p in withShares)
+            {
+                blocks.Add(new Block(
+                    PersonHead(p.Name, Money(p.Owed)),
+                    PersonHeadHeight,
+                    StartsSection: true,
+                    IsHead: true));
+                foreach (var item in p.ShareItems)
+                {
+                    blocks.Add(new Block(
+                        Row([
+                            Number(PersianDate.ToDisplayWithTime(item.DateUtc.ToLocalTime())),
+                            Text(item.Description.Length > 0 ? item.Description : "بدون شرح"),
+                            Number(Money(item.Amount)),
+                        ], ["right", "right", "left"], PersonItems),
+                        RowHeight));
+                }
             }
         }
 
@@ -252,6 +284,10 @@ public static class ReportHtmlFormatter
         .debit { background: #FDEAEA; color: #A32020; }
         .settled { background: #EEF3F2; color: #6C8B88; }
         .spacer { height: 16px; }
+        .person { height: 34px; display: flex; justify-content: space-between; align-items: center;
+                  border-right: 3px solid #14B8A6; padding: 0 8px 0 0; margin-top: 4px; }
+        .person .who { font-size: 12px; font-weight: 700; }
+        .person .sum { font-size: 10px; color: #6C8B88; }
         """;
 
     private static string Header(
@@ -269,6 +305,13 @@ public static class ReportHtmlFormatter
         """;
 
     private static string SectionTitle(string text) => $"<h2>{text}</h2>";
+
+    /// <summary>A person's name with their share total, above that person's column headings.</summary>
+    private static string PersonHead(string name, string total) =>
+        $"""
+        <div class="person"><span class="who">{Escape(name)}</span>
+        <span class="sum">مجموع سهم: <span class="num">{total}</span></span></div>
+        """ + TableHead(["تاریخ", "شرح", "سهم"], ["right", "right", "left"], PersonItems);
 
     private static string Spacer() => "<div class=\"spacer\"></div>";
 
