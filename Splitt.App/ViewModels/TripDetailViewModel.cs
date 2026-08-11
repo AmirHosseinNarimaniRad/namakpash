@@ -106,7 +106,7 @@ public partial class TripDetailViewModel : ObservableObject
         foreach (var e in expenses)
         {
             var payer = names.GetValueOrDefault(e.PaidById, "؟");
-            var date = PersianDate.ToDisplay(e.DateUtc.ToLocalTime());
+            var date = PersianDate.ToDisplayWithTime(e.DateUtc.ToLocalTime());
 
             string meta, sharesText;
             if (e.IsSettlement)

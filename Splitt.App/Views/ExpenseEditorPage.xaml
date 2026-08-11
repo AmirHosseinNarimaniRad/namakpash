@@ -177,6 +177,7 @@
                                 SelectedIndex="{Binding SelectedYearIndex}"
                                 HorizontalTextAlignment="Center" />
                     </Grid>
+                    <Button Text="امروز" Style="{StaticResource SecondaryButton}" Command="{Binding TodayCommand}" />
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                         <Button Grid.Column="0" Text="تأیید" Command="{Binding ConfirmDateCommand}" />
                         <Button Grid.Column="1" Text="انصراف" Style="{StaticResource SecondaryButton}" Command="{Binding CloseDatePickerCommand}" />

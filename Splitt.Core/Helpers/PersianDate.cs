@@ -20,6 +20,20 @@ public static class PersianDate
         return $"{y:0000}/{m:00}/{d:00}";
     }
 
+    /// <summary>
+    /// Local date → "1404/05/15", or "1404/05/15 14:32" when the value carries a
+    /// time of day. Expenses saved before times were recorded sit at local midnight;
+    /// they keep showing the date alone instead of a meaningless "00:00".
+    /// Wrapped in an LTR isolate so the date and time do not swap inside an RTL line.
+    /// </summary>
+    public static string ToDisplayWithTime(DateTime date)
+    {
+        var text = ToDisplay(date);
+        if (date.TimeOfDay != TimeSpan.Zero)
+            text += " " + date.ToString("HH:mm", CultureInfo.InvariantCulture);
+        return Bidi.Ltr(text);
+    }
+
     /// <summary>Local date → "15 مرداد 1404".</summary>
     public static string ToLongDisplay(DateTime date)
     {

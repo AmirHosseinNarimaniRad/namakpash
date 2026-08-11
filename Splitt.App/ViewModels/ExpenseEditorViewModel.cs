@@ -78,7 +78,8 @@ public partial class ExpenseEditorViewModel : ObservableObject
     [ObservableProperty]
     private int _selectedDayIndex;
 
-    private DateTime _dateLocal = DateTime.Now.Date;
+    // Carries a time of day, not just the day: it orders same-day expenses in the list.
+    private DateTime _dateLocal = DateTime.Now;
 
     public ExpenseEditorViewModel(SplittDatabase db) => _db = db;
 
@@ -108,7 +109,8 @@ public partial class ExpenseEditorViewModel : ObservableObject
             PageTitle = "ویرایش هزینه";
             AmountText = MoneyFormat.Format(_expense.Amount);
             Description = _expense.Description;
-            _dateLocal = _expense.DateUtc.ToLocalTime().Date;
+            // Keep the original time: editing an expense must not move it up the list.
+            _dateLocal = _expense.DateUtc.ToLocalTime();
 
             var shares = await _db.GetSharesForExpenseAsync(_expense.Id);
             var byId = shares.ToDictionary(s => s.ParticipantId, s => s.Share);
@@ -271,13 +273,30 @@ public partial class ExpenseEditorViewModel : ObservableObject
         SelectedDayIndex = Math.Max(0, keep);
     }
 
+    /// <summary>Jumps the three pickers to today without closing the dialog.</summary>
+    [RelayCommand]
+    private void Today()
+    {
+        var (y, m, d) = PersianDate.ToJalali(DateTime.Now);
+        var yearIndex = Years.IndexOf(y);
+        if (yearIndex < 0)
+            return;
+
+        SelectedYearIndex = yearIndex;
+        SelectedMonthIndex = m - 1;
+        RebuildDays();
+        SelectedDayIndex = Math.Min(d - 1, Days.Count - 1);
+    }
+
     [RelayCommand]
     private void ConfirmDate()
     {
         if (SelectedYearIndex >= 0 && SelectedMonthIndex >= 0 && SelectedDayIndex >= 0)
         {
+            // The picker chooses a day; the time of day rides along untouched.
             _dateLocal = PersianDate.FromJalali(
-                Years[SelectedYearIndex], SelectedMonthIndex + 1, Days[SelectedDayIndex]);
+                Years[SelectedYearIndex], SelectedMonthIndex + 1, Days[SelectedDayIndex])
+                + _dateLocal.TimeOfDay;
             DateText = PersianDate.ToLongDisplay(_dateLocal);
         }
         IsDatePickerOpen = false;

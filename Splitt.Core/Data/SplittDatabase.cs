@@ -79,9 +79,14 @@ public class SplittDatabase
 
     // ---- Expenses ----
 
+    /// <summary>
+    /// Newest first. The id breaks ties so expenses that share a timestamp — anything
+    /// saved before times were recorded, and imports — still come back newest first
+    /// instead of in whatever order SQLite happens to return them.
+    /// </summary>
     public Task<List<Expense>> GetExpensesAsync(int tripId) =>
         _db.Table<Expense>().Where(e => e.TripId == tripId)
-            .OrderByDescending(e => e.DateUtc).ToListAsync();
+            .OrderByDescending(e => e.DateUtc).ThenByDescending(e => e.Id).ToListAsync();
 
     public async Task<List<ExpenseShare>> GetSharesForTripAsync(int tripId)
     {
