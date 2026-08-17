@@ -76,10 +76,26 @@ bundle's Brotli assets are served uncompressed. That is a reason to reconsider t
 
 ## Regenerating the assets
 
-Screenshots come from the emulator with a seeded demo database (a four-person trip that exercises
-an uneven split, an excluded participant, a rounding remainder and a recorded settlement) and
-Android's `sysui_demo` mode for a clean status bar. Full-resolution PNGs for store listings live
-in `../store/screenshots/`.
+Screenshots come from the emulator with a seeded demo database and Android's `sysui_demo` mode for
+a clean status bar. Full-resolution PNGs for store listings live in `../store/screenshots/`.
+
+The demo data is deliberately chosen to exercise the awkward cases in one screen: a four-person
+trip with an uneven split, a participant excluded from one expense (the dash in the matrix), a
+rounding remainder (100,000 ÷ 3 → 33,334 + 33,333 + 33,333) and a recorded settlement that leaves
+one person at exactly zero. Two smaller events — a birthday dinner and shared house bills — sit
+alongside it so the list shows the app is not only for travel.
+
+Persian cannot be typed through `adb shell input text`, so the demo data is written straight into
+the app's SQLite file rather than entered by hand. Note that dates are stored as .NET ticks in a
+`bigint` column, and that an expense landing on exactly local midnight renders without a time
+(by design — `PersianDate.ToDisplayWithTime` omits a zero time), which looks like a bug in a
+screenshot. `run-as` only works on a Debug build.
+
+The report shots (`08`, `09`) and `../store/نمونه-گزارش.pdf` are rendered from the real
+`ReportHtmlFormatter` output rather than captured from the phone, so they are the same HTML the
+app turns into a PDF. Printing that HTML needs two additions the app itself never wants, because
+its writer paints each `.page` onto its own canvas: `@page { size: A4; margin: 0 }` and a
+`break-after: page` on `.page`. Without them Chrome prints US Letter and flows the pages together.
 
 Fonts were subset with `pyftsubset`, keeping `--layout-features='*'` — dropping the layout
 features breaks Arabic shaping and the text renders as disconnected letters.
