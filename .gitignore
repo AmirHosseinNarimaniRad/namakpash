@@ -13,6 +13,7 @@ secrets.json
 
 # ---- Personal / local-only ----
 CLAUDE.md
+notes/
 
 # ---- Build output ----
 bin/

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>حریم خصوصی — نمک‌پاش</title>
+<meta name="description" content="نمک‌پاش هیچ اطلاعاتی جمع‌آوری نمی‌کند، هیچ دسترسی‌ای نمی‌گیرد و به اینترنت وصل نمی‌شود.">
+<meta name="theme-color" content="#14B8A6">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+
+<style>
+@font-face{font-family:Vazirmatn;src:url(assets/fonts/Vazirmatn-Regular.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:Vazirmatn;src:url(assets/fonts/Vazirmatn-SemiBold.woff2) format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:Vazirmatn;src:url(assets/fonts/Vazirmatn-Bold.woff2) format('woff2');font-weight:700;font-display:swap}
+
+:root{
+  --accent:#14B8A6; --accent-deep:#0D9488; --accent-soft:#CCFBF1;
+  --bg:#F1F6F5; --surface:#FFFFFF; --text:#0E1E1B; --muted:#5C6F6A; --line:#DCE7E4;
+  --shadow:0 1px 2px rgba(13,60,52,.05), 0 8px 24px rgba(13,60,52,.07);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]){
+    --accent:#2DD4BF; --accent-deep:#2DD4BF; --accent-soft:#134E4A;
+    --bg:#0A0F0E; --surface:#141B1A; --text:#E9F1EF; --muted:#93A5A0; --line:#243130;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme=dark]{
+  --accent:#2DD4BF; --accent-deep:#2DD4BF; --accent-soft:#134E4A;
+  --bg:#0A0F0E; --surface:#141B1A; --text:#E9F1EF; --muted:#93A5A0; --line:#243130;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:Vazirmatn,system-ui,sans-serif;background:var(--bg);color:var(--text);
+  line-height:1.85;font-size:16px;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:720px;margin-inline:auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);background:var(--surface)}
+.bar{display:flex;align-items:center;height:64px;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;text-decoration:none;color:inherit}
+.mark{width:36px;height:36px;border-radius:11px;background:var(--accent);display:grid;place-items:center;flex:none}
+.mark svg{width:26px;height:26px;display:block}
+.bar a.back{margin-inline-start:auto;color:var(--muted);text-decoration:none;font-size:15px}
+.bar a.back:hover{color:var(--text)}
+
+main{padding-block:56px 72px}
+h1{font-size:clamp(26px,5vw,36px);font-weight:700;line-height:1.35}
+.sub{color:var(--muted);margin-top:10px;font-size:15px}
+.lead{
+  margin-top:28px;background:var(--accent-soft);border:1px solid var(--line);
+  border-radius:16px;padding:22px 24px;font-size:16.5px;
+}
+.lead b{font-weight:700}
+h2{font-size:20px;font-weight:600;margin-top:40px;margin-bottom:10px}
+p{color:var(--muted)}
+p+p{margin-top:12px}
+ul{margin-top:12px;padding-inline-start:0;list-style:none;display:grid;gap:10px}
+li{display:flex;gap:11px;color:var(--muted);align-items:flex-start}
+li svg{width:19px;height:19px;flex:none;margin-top:6px;color:var(--accent-deep)}
+strong{color:var(--text);font-weight:600}
+a.link{color:var(--accent-deep);text-decoration:none;border-bottom:1px solid currentColor}
+footer{border-top:1px solid var(--line);background:var(--surface);padding-block:30px;font-size:14px;color:var(--muted);margin-top:64px}
+footer .wrap{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap}
+footer a{color:inherit;text-decoration:none}
+footer a:hover{color:var(--text)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 456 456" fill="#fff">
+          <g transform="translate(228 228) scale(0.86) translate(-228 -228)">
+            <g transform="rotate(160 228 150)">
+              <rect x="194" y="88" width="68" height="38" rx="18"/>
+              <rect x="203" y="122" width="50" height="16"/>
+              <path d="M196 134 H260 L270 192 Q272 210 254 210 H202 Q184 210 186 192 Z"/>
+            </g>
+            <circle cx="243" cy="238" r="9"/><circle cx="214" cy="268" r="8"/>
+            <circle cx="274" cy="266" r="8"/><circle cx="190" cy="294" r="7"/>
+            <circle cx="298" cy="292" r="7"/>
+            <path d="M108 306 h100 a50 50 0 0 1 -100 0 z"/>
+            <path d="M248 306 h100 a50 50 0 0 1 -100 0 z"/>
+          </g>
+        </svg>
+      </span>
+      نمک‌پاش
+    </a>
+    <a class="back" href="index.html">بازگشت به صفحهٔ اصلی</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <h1>سیاست حریم خصوصی</h1>
+    <p class="sub">آخرین به‌روزرسانی: 25 مرداد 1405</p>
+
+    <div class="lead">
+      <b>خلاصه:</b> نمک‌پاش هیچ اطلاعاتی از شما جمع‌آوری، ذخیره یا ارسال نمی‌کند.
+      برنامه هیچ دسترسی‌ای از اندروید نمی‌گیرد — حتی دسترسی به اینترنت — و اصلاً
+      توانایی فنی ارسال داده به بیرون از گوشی شما را ندارد.
+    </div>
+
+    <h2>چه اطلاعاتی جمع‌آوری می‌شود؟</h2>
+    <p>
+      هیچ. نمک‌پاش نه حساب کاربری دارد، نه ثبت‌نام، نه ایمیل یا شمارهٔ تلفن می‌گیرد.
+      هیچ ابزار آماری، تبلیغاتی یا ردیابی در برنامه وجود ندارد و هیچ کتابخانهٔ متعلق
+      به شرکت دیگری در آن به کار نرفته است.
+    </p>
+
+    <h2>اطلاعات من کجا ذخیره می‌شود؟</h2>
+    <p>
+      نام سفرها، نام شرکت‌کننده‌ها، هزینه‌ها و مبلغ‌ها همگی در یک فایل پایگاه‌دادهٔ
+      محلی روی حافظهٔ خصوصی خود گوشی شما نگهداری می‌شوند. این فایل در اختیار برنامه‌های
+      دیگر قرار نمی‌گیرد و در هیچ سروری نسخهٔ پشتیبان ندارد.
+    </p>
+    <p>
+      اگر برنامه را حذف کنید، این اطلاعات هم از بین می‌رود. برای همین امکان
+      «پشتیبان‌گیری» در برنامه وجود دارد.
+    </p>
+
+    <h2>دسترسی‌های اندروید</h2>
+    <p>
+      نسخهٔ منتشرشدهٔ نمک‌پاش <strong>هیچ دسترسی‌ای درخواست نمی‌کند</strong>. می‌توانید
+      این را در صفحهٔ «مجوزها»ی برنامه در تنظیمات گوشی خودتان ببینید. به‌طور مشخص:
+    </p>
+    <ul>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>دسترسی به <strong>اینترنت</strong> ندارد.</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>به <strong>مخاطبین</strong>، <strong>موقعیت مکانی</strong>، <strong>دوربین</strong>، <strong>میکروفون</strong> و <strong>پیامک</strong> کاری ندارد.</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>حافظهٔ عمومی گوشی را نمی‌خواند و در آن چیزی نمی‌نویسد.</span></li>
+    </ul>
+
+    <h2>اشتراک‌گذاری گزارش و پشتیبان</h2>
+    <p>
+      وقتی گزارش PDF یا فایل پشتیبان را به اشتراک می‌گذارید، فایل به‌وسیلهٔ خود اندروید
+      و به برنامه‌ای که <strong>شما</strong> انتخاب می‌کنید تحویل داده می‌شود. این کار
+      فقط با درخواست صریح شما انجام می‌شود و نمک‌پاش در آن نقشی جز ساختن فایل ندارد.
+      از آن به بعد، سیاست حریم خصوصی همان برنامهٔ مقصد حاکم است.
+    </p>
+
+    <h2>کودکان</h2>
+    <p>
+      نمک‌پاش هیچ اطلاعاتی از هیچ کاربری — در هر سنی — جمع‌آوری نمی‌کند.
+    </p>
+
+    <h2>تغییرات این سیاست</h2>
+    <p>
+      اگر روزی رفتار برنامه تغییر کند، این صفحه پیش از انتشار آن نسخه به‌روزرسانی خواهد شد
+      و تاریخ بالای صفحه عوض می‌شود.
+    </p>
+
+    <h2>تماس</h2>
+    <p>
+      برای هر پرسش دربارهٔ حریم خصوصی می‌توانید از طریق
+      <a class="link" href="https://github.com/AmirHosseinNarimaniRad/namakpash/issues" rel="noopener">صفحهٔ پروژه در گیت‌هاب</a>
+      در تماس باشید.
+    </p>
+    <p>
+      کد کامل برنامه در دسترس عموم است، بنابراین هر ادعایی که در این صفحه آمده قابل بررسی است.
+    </p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>نمک‌پاش</span>
+    <span><a href="index.html">صفحهٔ اصلی</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
