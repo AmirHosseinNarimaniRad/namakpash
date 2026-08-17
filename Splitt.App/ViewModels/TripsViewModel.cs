@@ -83,7 +83,7 @@ public partial class TripsViewModel : ObservableObject
             await LoadAsync();
 
             if (Shell.Current?.CurrentPage is Page page)
-                await page.DisplayAlertAsync("بازیابی شد", $"سفر «{trip.Name}» با موفقیت وارد شد.", "باشه");
+                await page.DisplayAlertAsync("بازیابی شد", $"رویداد «{trip.Name}» با موفقیت وارد شد.", "باشه");
         }
         catch (Exception)
         {

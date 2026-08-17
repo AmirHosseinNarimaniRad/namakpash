@@ -297,7 +297,7 @@ public partial class TripDetailViewModel : ObservableObject
 
         await Share.Default.RequestAsync(new ShareFileRequest
         {
-            Title = $"گزارش سفر «{trip.Name}»",
+            Title = $"گزارش رویداد «{trip.Name}»",
             File = new ShareFile(path),
         });
     }
@@ -320,7 +320,7 @@ public partial class TripDetailViewModel : ObservableObject
 
         await Share.Default.RequestAsync(new ShareFileRequest
         {
-            Title = $"پشتیبان سفر «{trip.Name}»",
+            Title = $"پشتیبان رویداد «{trip.Name}»",
             File = new ShareFile(path),
         });
     }

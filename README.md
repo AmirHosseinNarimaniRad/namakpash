@@ -10,7 +10,9 @@ Persian (Farsi) UI with full right-to-left layout, Toman amounts, and Jalali dat
 
 ## Features
 
-- **Trips** — create a trip and add participants by name. No accounts, no login, no sync.
+- **Events** — create an event and add participants by name. An event is anything a bill gets
+  split over: a trip, a dinner, a party, a restaurant. No accounts, no login, no sync.
+  The Persian UI calls this a رویداد; the model and the SQLite table are still named `Trip`.
 - **Expenses** — record who paid, how much, a description, the date, and who shares the cost.
   Split equally by default, or enter custom unequal amounts per person. The time of entry is kept
   alongside the date, so same-day expenses stay in the order you added them, newest first. The date
@@ -20,11 +22,11 @@ Persian (Farsi) UI with full right-to-left layout, Toman amounts, and Jalali dat
 - **Settle up** — a greedy debt-simplification algorithm proposes the shortest list of
   "X pays Y amount Z" transactions (at most *n − 1* for *n* people).
 - **Record a settlement** — stored as a flagged expense, so the balance math never needs a special case.
-- **Report** — a per-person breakdown of the whole trip: what each person paid and what their
-  share was, expense by expense, plus the trip total and per-person average. Every expense card
+- **Report** — a per-person breakdown of the whole event: what each person paid and what their
+  share was, expense by expense, plus the event total and per-person average. Every expense card
   also lists each participant's share at a glance.
 - **Share as PDF** — one tap renders the report as an A4 PDF and hands it to the Android share
-  sheet: trip header, totals, a per-person summary, the itemized statement, recorded settlements and
+  sheet: event header, totals, a per-person summary, the itemized statement, recorded settlements and
   the transfers still outstanding. Paginated properly, with table headings repeated when a table
   continues onto the next page. Generated on-device with no PDF library and no network.
 - **Expense matrix** — the heart of the report: one row per expense, one column per person, each
@@ -32,7 +34,7 @@ Persian (Farsi) UI with full right-to-left layout, Toman amounts, and Jalali dat
   tinted. Every column totals to that person's share and every row to the expense amount, so the
   report reconciles against itself. Past five people the columns are split into a second table
   rather than shrunk, so nothing is ever truncated.
-- **Backup** — export a trip to JSON via the share sheet, import it back on any device.
+- **Backup** — export an event to JSON via the share sheet, import it back on any device.
 - **Dark mode** and a consistent card-based design system.
 
 ## Correctness guarantees

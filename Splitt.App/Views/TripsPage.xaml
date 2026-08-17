@@ -51,14 +51,14 @@
             HorizontalOptions="Center"
             Spacing="8"
             Padding="32,0">
-            <Label Text="🧳" FontSize="56" HorizontalOptions="Center" />
-            <Label Text="هنوز سفری نساخته‌ای" Style="{StaticResource SectionLabel}" HorizontalTextAlignment="Center" />
-            <Label Text="اولین سفر یا دورهمی را بساز و هزینه‌ها را راحت دنگ کن."
+            <Label Text="🧂" FontSize="56" HorizontalOptions="Center" />
+            <Label Text="هنوز رویدادی نساخته‌ای" Style="{StaticResource SectionLabel}" HorizontalTextAlignment="Center" />
+            <Label Text="اولین رویداد را بساز — سفر، دورهمی، مهمانی یا رستوران. هزینه‌ها را راحت دنگ کن."
                    Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
 
         <Button
-            Text="＋ سفر جدید"
+            Text="＋ رویداد جدید"
             Style="{StaticResource Fab}"
             Command="{Binding AddTripCommand}"
             VerticalOptions="End"

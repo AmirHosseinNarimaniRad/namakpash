@@ -33,7 +33,7 @@ public partial class TripEditorViewModel : ObservableObject
     private string _newParticipantName = "";
 
     [ObservableProperty]
-    private string _pageTitle = "سفر جدید";
+    private string _pageTitle = "رویداد جدید";
 
     [ObservableProperty]
     private bool _isEditing;
@@ -56,7 +56,7 @@ public partial class TripEditorViewModel : ObservableObject
                 return;
 
             IsEditing = true;
-            PageTitle = "ویرایش سفر";
+            PageTitle = "ویرایش رویداد";
             Name = _trip.Name;
 
             // Same reason as TripsViewModel.LoadAsync: build first, swap in without awaiting,
@@ -112,7 +112,7 @@ public partial class TripEditorViewModel : ObservableObject
 
         if (name.Length == 0)
         {
-            await page.DisplayAlertAsync("نام سفر", "برای سفر یک نام انتخاب کن.", "باشه");
+            await page.DisplayAlertAsync("نام رویداد", "برای رویداد یک نام انتخاب کن.", "باشه");
             return;
         }
         if (Participants.Count < 2)
@@ -151,8 +151,8 @@ public partial class TripEditorViewModel : ObservableObject
 
         var page = Shell.Current.CurrentPage;
         var confirmed = await page.DisplayAlertAsync(
-            "حذف سفر",
-            $"سفر «{_trip.Name}» با همهٔ هزینه‌هایش برای همیشه حذف شود؟",
+            "حذف رویداد",
+            $"رویداد «{_trip.Name}» با همهٔ هزینه‌هایش برای همیشه حذف شود؟",
             "حذف", "انصراف");
         if (!confirmed)
             return;

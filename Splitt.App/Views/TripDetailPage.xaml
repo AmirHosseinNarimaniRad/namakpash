@@ -371,7 +371,7 @@
                                  VerticalOptions="Center" HorizontalOptions="Center" Spacing="8" Padding="32,0">
                 <Label Text="📊" FontSize="56" HorizontalOptions="Center" />
                 <Label Text="هنوز گزارشی وجود ندارد" Style="{StaticResource SectionLabel}" HorizontalTextAlignment="Center" />
-                <Label Text="با ثبت اولین هزینه، گزارش سفر ساخته می‌شود."
+                <Label Text="با ثبت اولین هزینه، گزارش رویداد ساخته می‌شود."
                        Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
 
