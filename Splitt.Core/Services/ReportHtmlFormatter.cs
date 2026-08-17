@@ -318,7 +318,7 @@ public static class ReportHtmlFormatter
         string tripName, TripReport report, int expenseCount, int peopleCount, DateTime generated)
         => $"""
         <div class="head">
-          <div class="eyebrow">گزارش سفر</div>
+          <div class="eyebrow">گزارش رویداد</div>
           <div class="trip">{Escape(tripName)}</div>
           <div class="meta">{peopleCount} نفر · {expenseCount} هزینه · تاریخ گزارش: {PersianDate.ToLongDisplay(generated)}</div>
         </div>

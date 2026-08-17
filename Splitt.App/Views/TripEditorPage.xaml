@@ -11,7 +11,7 @@
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Spacing="16">
 
-                <Label Text="نام سفر" Style="{StaticResource SectionLabel}" />
+                <Label Text="نام رویداد" Style="{StaticResource SectionLabel}" />
                 <Border Style="{StaticResource FieldCard}">
                     <Entry Text="{Binding Name}" Placeholder="مثلاً: سفر شمال" />
                 </Border>
@@ -70,7 +70,7 @@
                        Style="{StaticResource CaptionLabel}"
                        IsVisible="{Binding IsEditing}" />
 
-                <Button Text="حذف سفر"
+                <Button Text="حذف رویداد"
                         Style="{StaticResource DangerTextButton}"
                         Command="{Binding DeleteTripCommand}"
                         IsVisible="{Binding IsEditing}"

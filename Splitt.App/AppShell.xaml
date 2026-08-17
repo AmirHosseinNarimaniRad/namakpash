@@ -8,7 +8,7 @@
     FlowDirection="RightToLeft">
 
     <ShellContent
-        Title="سفرها"
+        Title="رویدادها"
         ContentTemplate="{DataTemplate views:TripsPage}"
         Route="trips" />
 

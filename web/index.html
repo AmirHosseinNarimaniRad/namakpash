@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>نمک‌پاش — تقسیم خرج دورهمی، بدون دردسر</title>
+<meta name="description" content="نمک‌پاش خرج سفر و دورهمی را بین دوستان تقسیم می‌کند. کاملاً آفلاین، بدون حساب کاربری و بدون هیچ دسترسی.">
+<meta name="theme-color" content="#14B8A6">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="نمک‌پاش — تقسیم خرج دورهمی، بدون دردسر">
+<meta property="og:description" content="کاملاً آفلاین، بدون حساب کاربری، بدون هیچ دسترسی.">
+<meta property="og:image" content="assets/shots/01-trips.webp">
+
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+
+<style>
+@font-face{font-family:Vazirmatn;src:url(assets/fonts/Vazirmatn-Regular.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:Vazirmatn;src:url(assets/fonts/Vazirmatn-SemiBold.woff2) format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:Vazirmatn;src:url(assets/fonts/Vazirmatn-Bold.woff2) format('woff2');font-weight:700;font-display:swap}
+
+:root{
+  --accent:#14B8A6; --accent-deep:#0D9488; --accent-soft:#CCFBF1;
+  --green:#15A34A; --red:#DC2626;
+  --bg:#F1F6F5; --surface:#FFFFFF; --surface-2:#E9F1EF;
+  --text:#0E1E1B; --muted:#5C6F6A; --line:#DCE7E4;
+  --shadow:0 1px 2px rgba(13,60,52,.05), 0 8px 24px rgba(13,60,52,.07);
+  --shadow-lg:0 2px 4px rgba(13,60,52,.06), 0 20px 48px rgba(13,60,52,.12);
+  --radius:16px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]){
+    --accent:#2DD4BF; --accent-deep:#14B8A6; --accent-soft:#134E4A;
+    --green:#4ADE80; --red:#F87171;
+    --bg:#0A0F0E; --surface:#141B1A; --surface-2:#1B2423;
+    --text:#E9F1EF; --muted:#93A5A0; --line:#243130;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    --shadow-lg:0 2px 4px rgba(0,0,0,.5), 0 20px 48px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme=dark]{
+  --accent:#2DD4BF; --accent-deep:#14B8A6; --accent-soft:#134E4A;
+  --green:#4ADE80; --red:#F87171;
+  --bg:#0A0F0E; --surface:#141B1A; --surface-2:#1B2423;
+  --text:#E9F1EF; --muted:#93A5A0; --line:#243130;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.5), 0 20px 48px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+/* `clip`, not `hidden`: hidden would make body a scroll container and break the
+   sticky header. In RTL any stray overflow also shifts the whole page sideways. */
+html{scroll-behavior:smooth;overflow-x:clip}
+body{
+  font-family:Vazirmatn,system-ui,sans-serif;
+  background:var(--bg); color:var(--text);
+  line-height:1.75; font-size:16px;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:clip;
+}
+.wrap{max-width:1080px;margin-inline:auto;padding-inline:20px}
+section{padding-block:72px}
+a{color:inherit}
+
+/* ---------- header ---------- */
+header{
+  position:sticky; top:0; z-index:50;
+  background:color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter:blur(14px); border-bottom:1px solid var(--line);
+}
+.bar{display:flex;align-items:center;gap:12px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;text-decoration:none}
+.mark{width:36px;height:36px;border-radius:11px;background:var(--accent);display:grid;place-items:center;flex:none}
+.mark svg{width:26px;height:26px;display:block}
+.bar nav{margin-inline-start:auto;display:flex;gap:22px;align-items:center}
+.bar nav a{color:var(--muted);text-decoration:none;font-size:15px}
+.bar nav a:hover{color:var(--text)}
+@media(max-width:640px){.bar nav a.hide-s{display:none}}
+
+/* ---------- in-app browser notice ---------- */
+#inapp{display:none;background:var(--accent-soft);border-bottom:1px solid var(--line);font-size:14px}
+#inapp .wrap{padding-block:11px;display:flex;gap:10px;align-items:center;justify-content:center;text-align:center;flex-wrap:wrap}
+#inapp b{font-weight:600}
+
+/* ---------- hero ---------- */
+.hero{padding-top:56px;padding-bottom:24px}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+@media(max-width:860px){.hero-grid{grid-template-columns:1fr;gap:40px;text-align:center}}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;
+  color:var(--accent-deep);background:var(--accent-soft);
+  padding:6px 14px;border-radius:999px;margin-bottom:20px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .eyebrow{color:#7FE8DC}}
+:root[data-theme=dark] .eyebrow{color:#7FE8DC}
+h1{font-size:clamp(30px,5.4vw,46px);line-height:1.3;font-weight:700;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--accent-deep)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) h1 em{color:var(--accent)}}
+:root[data-theme=dark] h1 em{color:var(--accent)}
+.lede{margin-top:18px;font-size:17.5px;color:var(--muted);max-width:48ch}
+@media(max-width:860px){.lede{margin-inline:auto}}
+
+.cta{margin-top:30px;display:flex;flex-wrap:wrap;gap:12px}
+@media(max-width:860px){.cta{justify-content:center}}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:13px 24px;border-radius:13px;font-size:16px;font-weight:600;
+  text-decoration:none;border:1px solid transparent;cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.btn svg{width:19px;height:19px;flex:none}
+.btn-primary{background:var(--accent);color:#04201C;box-shadow:0 6px 18px rgba(20,184,166,.32)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(20,184,166,.4)}
+.btn-ghost{background:var(--surface);color:var(--text);border-color:var(--line);box-shadow:var(--shadow)}
+.btn-ghost:hover{transform:translateY(-1px)}
+.cta-note{margin-top:14px;font-size:13.5px;color:var(--muted)}
+
+/* ---------- phone ---------- */
+.phone{
+  width:min(300px,78vw);margin-inline:auto;
+  border:9px solid #10201D;border-radius:38px;background:#10201D;
+  box-shadow:var(--shadow-lg);overflow:hidden;position:relative;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .phone{border-color:#2A3937}}
+:root[data-theme=dark] .phone{border-color:#2A3937}
+.phone img{display:block;width:100%;height:auto;border-radius:29px}
+.hero-phone{position:relative}
+.hero-phone::after{
+  content:"";position:absolute;inset:12% 0 -8% 0;z-index:-1;
+  background:radial-gradient(closest-side, rgba(20,184,166,.28), transparent 72%);
+  filter:blur(18px);
+}
+
+/* ---------- trust strip ---------- */
+.strip{border-block:1px solid var(--line);background:var(--surface)}
+.strip .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-block:26px;text-align:center}
+@media(max-width:640px){.strip .wrap{grid-template-columns:1fr;gap:20px}}
+.strip b{display:block;font-size:17px;font-weight:600}
+.strip span{font-size:13.5px;color:var(--muted)}
+
+/* ---------- headings ---------- */
+.head{text-align:center;max-width:60ch;margin:0 auto 44px}
+h2{font-size:clamp(24px,3.6vw,32px);font-weight:700;line-height:1.35}
+.head p{margin-top:12px;color:var(--muted);font-size:16.5px}
+
+/* ---------- features ---------- */
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:860px){.features{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.features{grid-template-columns:1fr}}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:24px;box-shadow:var(--shadow);
+}
+.card .ic{
+  width:42px;height:42px;border-radius:12px;background:var(--accent-soft);
+  display:grid;place-items:center;margin-bottom:15px;color:var(--accent-deep);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .card .ic{color:#7FE8DC}}
+:root[data-theme=dark] .card .ic{color:#7FE8DC}
+.card .ic svg{width:22px;height:22px}
+.card h3{font-size:17px;font-weight:600;margin-bottom:7px}
+.card p{font-size:14.5px;color:var(--muted);line-height:1.8}
+
+/* ---------- report showcase ---------- */
+.showcase{background:var(--surface-2)}
+.showcase-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:44px;align-items:center}
+@media(max-width:860px){.showcase-grid{grid-template-columns:1fr;gap:32px}}
+.showcase-grid ul{list-style:none;margin-top:22px;display:grid;gap:13px}
+.showcase-grid li{display:flex;gap:11px;font-size:15.5px;color:var(--muted);align-items:flex-start}
+.showcase-grid li svg{width:19px;height:19px;flex:none;margin-top:5px;color:var(--accent-deep)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .showcase-grid li svg{color:var(--accent)}}
+:root[data-theme=dark] .showcase-grid li svg{color:var(--accent)}
+.paper{
+  background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:var(--shadow-lg);
+}
+.paper img{display:block;width:100%;height:auto}
+.paper figcaption{
+  padding:11px 16px;font-size:13px;color:#5C6F6A;
+  background:#F7FAFA;border-top:1px solid #E4EDEB;text-align:center;
+}
+
+/* ---------- gallery ---------- */
+.rail{display:flex;gap:22px;overflow-x:auto;padding:8px 20px 24px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.rail>figure{flex:0 0 auto;scroll-snap-align:center;text-align:center}
+.rail figcaption{margin-top:14px;font-size:14px;color:var(--muted)}
+
+/* ---------- download ---------- */
+.dl{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;max-width:760px;margin-inline:auto}
+@media(max-width:640px){.dl{grid-template-columns:1fr}}
+.dl-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:24px;box-shadow:var(--shadow);display:flex;flex-direction:column;
+}
+.dl-card.is-primary{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent),var(--shadow)}
+.dl-card h3{font-size:17.5px;font-weight:600;display:flex;align-items:center;gap:9px}
+.dl-card h3 svg{width:21px;height:21px;color:var(--accent-deep)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .dl-card h3 svg{color:var(--accent)}}
+:root[data-theme=dark] .dl-card h3 svg{color:var(--accent)}
+.dl-card p{font-size:14.5px;color:var(--muted);margin:9px 0 20px;flex:1}
+.badge{
+  display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;
+  background:var(--accent-soft);color:var(--accent-deep);margin-inline-start:6px;vertical-align:middle;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .badge{color:#7FE8DC}}
+:root[data-theme=dark] .badge{color:#7FE8DC}
+.btn-block{width:100%;justify-content:center}
+.btn[aria-disabled=true]{opacity:.5;pointer-events:none}
+
+/* ---------- ios steps ---------- */
+.steps{counter-reset:s;display:grid;gap:14px;margin-top:20px}
+.steps li{list-style:none;display:flex;gap:13px;align-items:flex-start;font-size:15px}
+.steps li::before{
+  counter-increment:s;content:counter(s);
+  width:26px;height:26px;border-radius:50%;flex:none;
+  background:var(--accent);color:#04201C;font-size:13.5px;font-weight:700;
+  display:grid;place-items:center;margin-top:3px;
+}
+.inline-ic{display:inline-grid;place-items:center;width:22px;height:22px;vertical-align:-5px;color:var(--accent-deep)}
+.inline-ic svg{width:17px;height:17px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .inline-ic{color:var(--accent)}}
+:root[data-theme=dark] .inline-ic{color:var(--accent)}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--line);background:var(--surface);padding-block:36px;font-size:14px;color:var(--muted)}
+footer .wrap{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+footer a{text-decoration:none}
+footer a:hover{color:var(--text)}
+.f-links{display:flex;gap:20px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<div id="inapp">
+  <div class="wrap">
+    <span>برای نصب، این صفحه را در <b>Safari</b> باز کنید — از منوی «…» گزینهٔ «Open in Browser» را بزنید.</span>
+  </div>
+</div>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="#top">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 456 456" fill="#fff">
+          <g transform="translate(228 228) scale(0.86) translate(-228 -228)">
+            <g transform="rotate(160 228 150)">
+              <rect x="194" y="88" width="68" height="38" rx="18"/>
+              <rect x="203" y="122" width="50" height="16"/>
+              <path d="M196 134 H260 L270 192 Q272 210 254 210 H202 Q184 210 186 192 Z"/>
+            </g>
+            <circle cx="243" cy="238" r="9"/><circle cx="214" cy="268" r="8"/>
+            <circle cx="274" cy="266" r="8"/><circle cx="190" cy="294" r="7"/>
+            <circle cx="298" cy="292" r="7"/>
+            <path d="M108 306 h100 a50 50 0 0 1 -100 0 z"/>
+            <path d="M248 306 h100 a50 50 0 0 1 -100 0 z"/>
+          </g>
+        </svg>
+      </span>
+      نمک‌پاش
+    </a>
+    <nav>
+      <a href="#features" class="hide-s">امکانات</a>
+      <a href="#shots" class="hide-s">تصاویر</a>
+      <a href="privacy.html" class="hide-s">حریم خصوصی</a>
+      <a href="#download">دریافت</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        بدون اینترنت · بدون حساب کاربری
+      </span>
+      <h1>خرج دورهمی را <em>درست</em> تقسیم کن</h1>
+      <p class="lede">
+        نمک‌پاش حساب سفر و مهمانی را بین دوستان نگه می‌دارد: چه کسی چه چیزی پرداخت کرده،
+        سهم هرکس چقدر است و در پایان چه کسی به چه کسی چقدر بدهکار است — با کمترین جابه‌جایی پول.
+      </p>
+      <div class="cta" id="cta"></div>
+      <p class="cta-note" id="ctaNote"></p>
+    </div>
+    <div class="hero-phone">
+      <div class="phone">
+        <img src="assets/shots/03-balances.webp" width="620" height="1392"
+             alt="صفحهٔ تراز و تسویه در نمک‌پاش: طلبکار و بدهکار هر نفر و پیشنهاد تسویه">
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="strip">
+  <div class="wrap">
+    <div><b>100٪ آفلاین</b><span>هیچ داده‌ای از گوشی خارج نمی‌شود</span></div>
+    <div><b>صفر دسترسی</b><span>حتی اجازهٔ اینترنت هم نمی‌گیرد</span></div>
+    <div><b>بدون ثبت‌نام</b><span>نه ایمیل، نه شمارهٔ تلفن، نه رمز</span></div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <div class="head">
+      <h2>هرچه برای تسویه لازم است، نه بیشتر</h2>
+      <p>نمک‌پاش عمداً کوچک نگه داشته شده: چند صفحه، چند دکمه، و حسابی که همیشه درست درمی‌آید.</p>
+    </div>
+    <div class="features">
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3>سفر و دورهمی</h3>
+        <p>برای هر رویداد — سفر، مهمانی یا رستوران — یک فهرست بساز و اسم شرکت‌کننده‌ها را وارد کن. همین. نه دعوت‌نامه‌ای لازم است، نه حساب کاربری.</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+        <h3>تقسیم مساوی یا دستی</h3>
+        <p>هزینه را مساوی بین همه پخش کن، یا سهم هرکس را دستی بنویس. هرکسی که در آن خرج شریک نبوده را بردار.</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 9l-5 5-3-3-4 4"/></svg></div>
+        <h3>تراز لحظه‌ای</h3>
+        <p>هر لحظه معلوم است چه کسی طلبکار است و چه کسی بدهکار. با هر ویرایش، همه‌چیز از نو حساب می‌شود.</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5-5 5 5"/><path d="M12 5v14"/></svg></div>
+        <h3>کمترین جابه‌جایی پول</h3>
+        <p>به‌جای اینکه همه با هم حساب کنند، نمک‌پاش کوتاه‌ترین فهرست «چه کسی به چه کسی چقدر» را پیشنهاد می‌دهد.</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg></div>
+        <h3>گزارش PDF</h3>
+        <p>با یک لمس، گزارش کامل رویداد به‌صورت PDF ساخته می‌شود و می‌توانی همان‌جا در گروه بفرستی.</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></div>
+        <h3>پشتیبان‌گیری</h3>
+        <p>هر رویداد را به شکل یک فایل ذخیره کن و هر وقت خواستی روی همان گوشی یا گوشی دیگر برگردان.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="wrap showcase-grid">
+    <div>
+      <h2>گزارشی که خودش را جمع می‌زند</h2>
+      <p class="lede" style="margin-top:14px">
+        قلب گزارش یک جدول است: هر سطر یک هزینه، هر ستون یک نفر. جمع هر ستون دقیقاً برابر
+        سهم همان نفر است — یعنی گزارش با خودش می‌خواند و جای بحث نمی‌گذارد.
+      </p>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>خط تیره یعنی آن شخص در آن خرج شریک نبوده — نه اینکه سهمش صفر بوده.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>خانهٔ پرداخت‌کنندهٔ هر هزینه رنگی است تا یک‌نگاهی پیدا شود.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>تاریخ‌ها شمسی، مبلغ‌ها به تومان، و ارقام انگلیسی.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>همه‌چیز روی خود گوشی ساخته می‌شود؛ نه سروری در کار است نه اینترنتی.</span></li>
+      </ul>
+    </div>
+    <figure class="paper">
+      <img src="assets/shots/09-matrix.webp" width="1000" height="577" loading="lazy"
+           alt="جدول سهم هر نفر از هر هزینه در گزارش نمک‌پاش: هر سطر یک هزینه، هر ستون یک نفر، با سطر مجموع سهم">
+      <figcaption>جدول «سهم هر نفر از هر هزینه» در گزارش PDF</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="shots">
+  <div class="wrap head">
+    <h2>یک نگاه به برنامه</h2>
+    <p>رابط کاربری کاملاً فارسی و راست‌به‌چپ، با پشتیبانی از حالت تاریک.</p>
+  </div>
+  <div class="rail">
+    <figure><div class="phone"><img src="assets/shots/01-trips.webp" width="620" height="1392" loading="lazy" alt="فهرست رویدادها"></div><figcaption>فهرست رویدادها</figcaption></figure>
+    <figure><div class="phone"><img src="assets/shots/02-expenses.webp" width="620" height="1392" loading="lazy" alt="فهرست هزینه‌ها با سهم هر نفر"></div><figcaption>هزینه‌ها و سهم هرکس</figcaption></figure>
+    <figure><div class="phone"><img src="assets/shots/05-editor.webp" width="620" height="1392" loading="lazy" alt="ثبت هزینهٔ جدید"></div><figcaption>ثبت هزینه</figcaption></figure>
+    <figure><div class="phone"><img src="assets/shots/04-report.webp" width="620" height="1392" loading="lazy" alt="گزارش رویداد"></div><figcaption>گزارش رویداد</figcaption></figure>
+    <figure><div class="phone"><img src="assets/shots/06-dark-expenses.webp" width="620" height="1392" loading="lazy" alt="هزینه‌ها در حالت تاریک"></div><figcaption>حالت تاریک</figcaption></figure>
+    <figure><div class="phone"><img src="assets/shots/07-dark-balances.webp" width="620" height="1392" loading="lazy" alt="تراز و تسویه در حالت تاریک"></div><figcaption>تراز در حالت تاریک</figcaption></figure>
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap">
+    <div class="head">
+      <h2>دریافت نمک‌پاش</h2>
+      <p id="dlIntro">نسخهٔ اندروید را نصب کن و همان‌جا شروع کن. هیچ حسابی لازم نیست.</p>
+    </div>
+    <div class="dl" id="dlCards"></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>نمک‌پاش · نسخهٔ <span id="ver">1.3</span> · ساخته‌شده برای استفادهٔ روزمره</span>
+    <span class="f-links">
+      <a href="privacy.html">حریم خصوصی</a>
+      <a href="https://github.com/AmirHosseinNarimaniRad/namakpash" rel="noopener">کد منبع</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- flip these as each channel goes live -------------------------------
+  var CONFIG = {
+    version:  "1.3",
+    apkUrl:   "https://github.com/AmirHosseinNarimaniRad/namakpash/releases/latest",
+    bazaarUrl: null,   // "https://cafebazaar.ir/app/ir.narimani.splitt"
+    myketUrl:  null,   // "https://myket.ir/app/ir.narimani.splitt"
+    pwaUrl:    null    // "/app/"  — set once the web version ships
+  };
+  // ------------------------------------------------------------------------
+
+  var ua = navigator.userAgent || "";
+  var isIOS = /iPad|iPhone|iPod/.test(ua) ||
+              (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/.test(ua);
+  // Links opened from Telegram/Instagram/WhatsApp land in a webview where iOS has no
+  // "Add to Home Screen" at all — worth calling out rather than letting it dead-end.
+  var inApp = /(FBAN|FBAV|Instagram|Line|Twitter|WhatsApp|Telegram)/i.test(ua) ||
+              (isIOS && /AppleWebKit/.test(ua) && !/Safari/.test(ua));
+
+  if (inApp) document.getElementById("inapp").style.display = "block";
+
+  var ICON = {
+    android: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18a.4.4 0 0 0-.7-.4l-1.87 3.23a11.4 11.4 0 0 0-9.74 0L5.26 5.9a.4.4 0 1 0-.7.4L6.4 9.48A10.9 10.9 0 0 0 1 18h22a10.9 10.9 0 0 0-5.4-8.52M7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5m10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5"/></svg>',
+    apple:   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.8c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.9-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.6 2.3 2.8 2.3s1.6-.7 3-.7 1.8.7 3 .7 2-1.1 2.8-2.2c.9-1.2 1.2-2.4 1.2-2.5 0 0-2.3-.9-2.3-3.7M14.2 5.9c.6-.8 1-1.9.9-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-.9 2.9 1 .1 2-.5 2.7-1.3"/></svg>',
+    down:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>',
+    share:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V3"/><path d="M8 7l4-4 4 4"/><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/></svg>',
+    plus:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>'
+  };
+
+  function btn(href, label, icon, primary) {
+    if (!href) {
+      return '<span class="btn ' + (primary ? "btn-primary" : "btn-ghost") +
+             ' btn-block" aria-disabled="true">' + icon + label + '</span>';
+    }
+    return '<a class="btn ' + (primary ? "btn-primary" : "btn-ghost") +
+           ' btn-block" href="' + href + '" rel="noopener">' + icon + label + '</a>';
+  }
+
+  // ---- hero call to action ----
+  var cta = document.getElementById("cta");
+  var note = document.getElementById("ctaNote");
+  var androidHref = CONFIG.bazaarUrl || CONFIG.apkUrl;
+
+  if (isIOS) {
+    if (CONFIG.pwaUrl) {
+      cta.innerHTML =
+        '<a class="btn btn-primary" href="#ios">' + ICON.apple + 'نصب روی آیفون</a>' +
+        '<a class="btn btn-ghost" href="#download">نسخهٔ اندروید</a>';
+      note.textContent = "نسخهٔ وب، مستقیم از داخل Safari نصب می‌شود.";
+    } else {
+      cta.innerHTML =
+        '<a class="btn btn-ghost" href="#download">' + ICON.android + 'فعلاً فقط اندروید</a>';
+      note.textContent = "نسخهٔ وب برای آیفون در دست ساخت است.";
+    }
+  } else {
+    cta.innerHTML =
+      '<a class="btn btn-primary" href="' + androidHref + '" rel="noopener">' +
+      ICON.android + (CONFIG.bazaarUrl ? "دریافت از بازار" : "دانلود برای اندروید") + '</a>' +
+      '<a class="btn btn-ghost" href="#features">امکانات برنامه</a>';
+    note.textContent = CONFIG.bazaarUrl
+      ? "رایگان · بدون تبلیغات · بدون هیچ دسترسی"
+      : "فایل APK · نسخهٔ " + CONFIG.version + " · بدون تبلیغات و بدون هیچ دسترسی";
+  }
+
+  // ---- download cards ----
+  var cards = [];
+
+  var androidButtons = CONFIG.bazaarUrl
+    ? btn(CONFIG.bazaarUrl, "دریافت از بازار", ICON.android, true) +
+      '<div style="height:10px"></div>' +
+      btn(CONFIG.apkUrl, "دانلود مستقیم APK", ICON.down, false)
+    : btn(CONFIG.apkUrl, "دانلود مستقیم APK", ICON.down, true);
+
+  cards.push(
+    '<div class="dl-card' + (isIOS ? "" : " is-primary") + '">' +
+      '<h3>' + ICON.android + 'اندروید</h3>' +
+      '<p>' + (CONFIG.bazaarUrl
+        ? "از کافه بازار نصب کن تا به‌روزرسانی‌ها خودکار برسد."
+        : "فایل نصب مستقیم. به‌زودی روی کافه بازار و مایکت هم منتشر می‌شود.") + '</p>' +
+      androidButtons +
+    '</div>'
+  );
+
+  cards.push(
+    '<div class="dl-card' + (isIOS && CONFIG.pwaUrl ? " is-primary" : "") + '" id="ios">' +
+      '<h3>' + ICON.apple + 'آیفون و آیپد' +
+        (CONFIG.pwaUrl ? "" : '<span class="badge">به‌زودی</span>') + '</h3>' +
+      (CONFIG.pwaUrl
+        ? '<p>نسخهٔ وب را باز کن و به صفحهٔ اصلی اضافه کن — بعد از آن کاملاً آفلاین کار می‌کند.</p>' +
+          '<ol class="steps">' +
+            '<li>این صفحه را در <b>Safari</b> باز کن.</li>' +
+            '<li>دکمهٔ <span class="inline-ic">' + ICON.share + '</span> را بزن.</li>' +
+            '<li>گزینهٔ <span class="inline-ic">' + ICON.plus + '</span> <b>Add to Home Screen</b> را انتخاب کن.</li>' +
+          '</ol>' +
+          '<div style="height:16px"></div>' +
+          btn(CONFIG.pwaUrl, "باز کردن نسخهٔ وب", ICON.apple, true)
+        : '<p>نسخهٔ وب نمک‌پاش در دست ساخت است؛ روی آیفون بدون نصب از اپ‌استور و بدون حساب کاربری کار خواهد کرد. تا آن موقع فقط نسخهٔ اندروید در دسترس است.</p>' +
+          btn(null, "به‌زودی", ICON.apple, false)) +
+    '</div>'
+  );
+
+  if (CONFIG.myketUrl) {
+    cards.push(
+      '<div class="dl-card">' +
+        '<h3>' + ICON.android + 'مایکت</h3>' +
+        '<p>اگر کافه بازار نداری، از مایکت نصب کن.</p>' +
+        btn(CONFIG.myketUrl, "دریافت از مایکت", ICON.android, false) +
+      '</div>'
+    );
+  }
+
+  document.getElementById("dlCards").innerHTML = cards.join("");
+
+  if (isIOS && !CONFIG.pwaUrl) {
+    document.getElementById("dlIntro").textContent =
+      "نسخهٔ آیفون هنوز آماده نیست. فعلاً نمک‌پاش فقط روی اندروید کار می‌کند.";
+  }
+
+  document.getElementById("ver").textContent = CONFIG.version;
+})();
+</script>
+
+</body>
+</html>
