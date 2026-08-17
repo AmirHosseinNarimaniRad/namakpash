@@ -175,6 +175,37 @@ public class ReportHtmlFormatterTests
         Assert.Contains("a &amp; b", html);
     }
 
+    [Fact]
+    public void SectionHeading_IsNeverTheLastThingOnAPage()
+    {
+        // A heading reserves room for the table head and first row that follow it. The matrix
+        // head used to re-check that for itself and ask for one row more, so it could fail on a
+        // page its own heading had already passed on - stranding the heading above a blank gap.
+        for (var count = 1; count <= 60; count++)
+        {
+            var (html, _) = Render(count);
+
+            foreach (var body in PageBodies(html))
+                Assert.False(
+                    body.TrimEnd().EndsWith("</h2>", StringComparison.Ordinal),
+                    $"a section heading ended a page in a report of {count} expenses");
+        }
+    }
+
+    /// <summary>The drawn content of each page, with the repeated footer stripped off.</summary>
+    private static IEnumerable<string> PageBodies(string html)
+    {
+        const string footer = "<div class=\"footer\">";
+        foreach (var chunk in html.Split("<div class=\"content\">").Skip(1))
+        {
+            var end = chunk.IndexOf(footer, StringComparison.Ordinal);
+            var body = end < 0 ? chunk : chunk[..end];
+            yield return body.TrimEnd().EndsWith("</div>", StringComparison.Ordinal)
+                ? body.TrimEnd()[..^"</div>".Length]
+                : body;
+        }
+    }
+
     private static int CountPages(string html) => Occurrences(html, "<section class=\"page\">");
 
     private static int Occurrences(string haystack, string needle)

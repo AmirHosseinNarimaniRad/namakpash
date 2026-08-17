@@ -128,8 +128,12 @@ public static class ReportHtmlFormatter
                 if (g > 0)
                     blocks.Add(new Block(Spacer(), SpacerHeight));
 
+                // Only a repeat group starts a section of its own. For the first group the
+                // section title directly above has already reserved this head and a row, and
+                // asking again here - for two rows - can fail where the title passed, which
+                // strands the title alone at the foot of the page.
                 blocks.Add(new Block(
-                    MatrixHead(group), MatrixHeadHeight, StartsSection: true, IsHead: true));
+                    MatrixHead(group), MatrixHeadHeight, StartsSection: g > 0, IsHead: true));
 
                 foreach (var e in realExpenses)
                     blocks.Add(new Block(MatrixRow(e, group, shareOf), MatrixRowHeight, Body: true));
