@@ -12,6 +12,7 @@ public sealed record TripCard(int Id, string Name, string SubText, string TotalT
 public partial class TripsViewModel : ObservableObject
 {
     private readonly SplittDatabase _db;
+    private int _loadGeneration;
 
     public ObservableCollection<TripCard> Trips { get; } = [];
 
@@ -27,19 +28,32 @@ public partial class TripsViewModel : ObservableObject
     {
         await _db.InitializeAsync();
 
-        Trips.Clear();
+        // OnAppearing is async void, so two loads can overlap - popping back from a deleted
+        // trip navigates twice in a row and reveals this page while a load is still running.
+        // Build the whole list first and swap it in without awaiting, or the two runs
+        // interleave around the Clear() and cards get added twice.
+        var generation = ++_loadGeneration;
+
+        var cards = new List<TripCard>();
         foreach (var trip in await _db.GetTripsAsync())
         {
             var people = await _db.GetParticipantsAsync(trip.Id);
             var expenses = await _db.GetExpensesAsync(trip.Id);
             var total = expenses.Where(e => !e.IsSettlement).Sum(e => e.Amount);
 
-            Trips.Add(new TripCard(
+            cards.Add(new TripCard(
                 trip.Id,
                 trip.Name,
                 $"{people.Count} نفر · {expenses.Count(e => !e.IsSettlement)} هزینه",
                 MoneyFormat.FormatToman(total)));
         }
+
+        if (generation != _loadGeneration)
+            return;
+
+        Trips.Clear();
+        foreach (var card in cards)
+            Trips.Add(card);
 
         IsEmpty = Trips.Count == 0;
     }

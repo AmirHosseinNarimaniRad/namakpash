@@ -22,6 +22,7 @@ public partial class TripEditorViewModel : ObservableObject
     private readonly SplittDatabase _db;
     private readonly List<Participant> _removed = [];
     private Trip? _trip;
+    private bool _loading;
 
     public string? TripIdText { get; set; }
 
@@ -43,22 +44,37 @@ public partial class TripEditorViewModel : ObservableObject
 
     public async Task LoadAsync()
     {
-        if (!int.TryParse(TripIdText, out var tripId) || tripId <= 0 || _trip is not null)
+        // _trip is only set after the first await, so it cannot guard against a second
+        // call that starts before this one finishes - _loading is set synchronously.
+        if (!int.TryParse(TripIdText, out var tripId) || tripId <= 0 || _trip is not null || _loading)
             return;
-
-        _trip = await _db.GetTripAsync(tripId);
-        if (_trip is null)
-            return;
-
-        IsEditing = true;
-        PageTitle = "ویرایش سفر";
-        Name = _trip.Name;
-
-        Participants.Clear();
-        foreach (var p in await _db.GetParticipantsAsync(tripId))
+        _loading = true;
+        try
         {
-            var hasActivity = await _db.ParticipantHasActivityAsync(p.Id);
-            Participants.Add(new ParticipantItem { Id = p.Id, Name = p.Name, CanRemove = !hasActivity });
+            _trip = await _db.GetTripAsync(tripId);
+            if (_trip is null)
+                return;
+
+            IsEditing = true;
+            PageTitle = "ویرایش سفر";
+            Name = _trip.Name;
+
+            // Same reason as TripsViewModel.LoadAsync: build first, swap in without awaiting,
+            // so overlapping loads cannot interleave around the Clear() and double the rows.
+            var items = new List<ParticipantItem>();
+            foreach (var p in await _db.GetParticipantsAsync(tripId))
+            {
+                var hasActivity = await _db.ParticipantHasActivityAsync(p.Id);
+                items.Add(new ParticipantItem { Id = p.Id, Name = p.Name, CanRemove = !hasActivity });
+            }
+
+            Participants.Clear();
+            foreach (var item in items)
+                Participants.Add(item);
+        }
+        finally
+        {
+            _loading = false;
         }
     }
 
@@ -142,6 +158,8 @@ public partial class TripEditorViewModel : ObservableObject
             return;
 
         await _db.DeleteTripAsync(_trip.Id);
-        await Shell.Current.GoToAsync("..");
+        // Straight to the list, not "..": that would land on the detail page of the trip
+        // just deleted, which then has to bounce back on its own and navigates twice.
+        await Shell.Current.GoToAsync("//trips");
     }
 }
