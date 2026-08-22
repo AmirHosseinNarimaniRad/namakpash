@@ -465,13 +465,19 @@ footer a:hover{color:var(--text)}
     plus:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>'
   };
 
+  // Store links leave the site, so they open in a new tab and this page stays
+  // put. In-page anchors (#download, #ios) must not spawn tabs.
+  function linkAttrs(href) {
+    return /^https?:\/\//i.test(href) ? ' target="_blank" rel="noopener"' : '';
+  }
+
   function btn(href, label, icon, primary) {
     if (!href) {
       return '<span class="btn ' + (primary ? "btn-primary" : "btn-ghost") +
              ' btn-block" aria-disabled="true">' + icon + label + '</span>';
     }
     return '<a class="btn ' + (primary ? "btn-primary" : "btn-ghost") +
-           ' btn-block" href="' + href + '" rel="noopener">' + icon + label + '</a>';
+           ' btn-block" href="' + href + '"' + linkAttrs(href) + '>' + icon + label + '</a>';
   }
 
   // ---- hero call to action ----
@@ -492,7 +498,7 @@ footer a:hover{color:var(--text)}
     }
   } else {
     cta.innerHTML =
-      '<a class="btn btn-primary" href="' + androidHref + '" rel="noopener">' +
+      '<a class="btn btn-primary" href="' + androidHref + '"' + linkAttrs(androidHref) + '>' +
       ICON.android + "دریافت از بازار" + '</a>' +
       '<a class="btn btn-ghost" href="#features">امکانات برنامه</a>';
     note.textContent = "رایگان · بدون تبلیغات · بدون هیچ دسترسی";
