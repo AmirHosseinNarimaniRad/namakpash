@@ -24,34 +24,35 @@ Open `index.html` directly, or serve it if you want the paths to behave exactly 
 python3 -m http.server 8000 --directory web
 ```
 
-## Going live: the three switches
+## Going live: the switches
 
-Everything that is not published yet is a `null` in the `CONFIG` block near the bottom of
-`index.html`. The page reads them at load and reshapes itself — no other edits needed.
+Anything not published yet is a `null` in the `CONFIG` block near the bottom of `index.html`. The
+page reads them at load and reshapes itself — no other edits needed.
 
 ```js
 var CONFIG = {
-  version:   "1.3",
-  apkUrl:    "https://github.com/AmirHosseinNarimaniRad/namakpash/releases/latest",
-  bazaarUrl: null,   // "https://cafebazaar.ir/app/ir.narimani.splitt"
+  version:   "1.3.1",
+  bazaarUrl: "https://cafebazaar.ir/app/ir.narimani.splitt",
   myketUrl:  null,   // "https://myket.ir/app/ir.narimani.splitt"
   pwaUrl:    null    // "/app/"
 };
 ```
 
-- **`bazaarUrl`** — until set, the Android card offers the direct APK and says Bazaar is coming.
-  Once set, Bazaar becomes the primary button and the APK drops to secondary.
+- **`bazaarUrl`** — the only Android channel the page offers. The direct-APK link was removed once
+  Bazaar went live: Bazaar delivers updates automatically, which a sideloaded APK cannot. The APK
+  still exists on the GitHub releases page for anyone who wants it, but the site no longer points
+  there. `apkUrl` is gone from `CONFIG` entirely — do not re-add it without deciding what it is for.
 - **`myketUrl`** — adds a third download card. Leave `null` to not mention Myket at all.
 - **`pwaUrl`** — until set, iOS visitors are told plainly that the web version is not ready.
   Once set, they get the install button and the Safari "Add to Home Screen" steps.
 
-Bump `version` on each release so the footer and the APK note stay honest.
+Bump `version` on each release so the footer stays honest.
 
 ## Platform behaviour
 
-The page does not present Android and PWA as equal choices. Android visitors are steered to the
-APK/Bazaar because browser storage is evictable and the app keeps everything on-device with no
-backend — an Android user who picks the web version gets weaker data durability for no gain.
+The page does not present Android and PWA as equal choices. Android visitors are steered to Bazaar
+because browser storage is evictable and the app keeps everything on-device with no backend — an
+Android user who picks the web version gets weaker data durability for no gain.
 iOS visitors are the web version's actual audience.
 
 It also detects in-app browsers (Telegram, Instagram, WhatsApp, …) and shows a banner asking the
@@ -67,6 +68,10 @@ workflow. Pushing to `main` deploys; there is nothing to run.
 `CNAME` holds the custom domain and must survive any reorganisation of this folder — Pages reads
 it from the published root, and losing it silently reverts the site to `*.github.io`.
 
+An Actions workflow was tried first and abandoned: pushing anything under `.github/workflows/`
+needs the `workflow` token scope, which the `gh` login on the build machine does not have. That is
+the whole reason this folder is `docs/` — it is the only subfolder Pages will serve without one.
+
 DNS lives at ArvanCloud, delegated from IRNIC. The free plan allows one record *per type*, which
 is why the app sits on a subdomain via the single `CNAME` record rather than on the apex:
 
@@ -81,6 +86,31 @@ without that limit. There is no server state, so mirroring to a second host late
 Note for when the PWA lands: GitHub Pages will not negotiate `Content-Encoding: br`, so a Blazor
 bundle's Brotli assets are served uncompressed. That is a reason to reconsider the host for
 `/app/`, not for this page.
+
+## Behaviour worth knowing before editing
+
+**Theme.** Both pages define their palette on `:root`, override it under
+`@media (prefers-color-scheme:dark)` guarded by `:root:not([data-theme=light])`, and again under
+`:root[data-theme=dark]` so a manual choice wins either way. The sun/moon button writes
+`namakpash-theme` to `localStorage`; an inline script in `<head>` applies it before first paint,
+otherwise a stored dark theme flashes light on load. With nothing stored the page follows the
+system, which is the default for anyone who never touches the button. The key is shared between
+`index.html` and `privacy.html`, so the choice carries across both.
+
+**Links.** `linkAttrs()` in `index.html` adds `target="_blank" rel="noopener"` to anything matching
+`^https?://`. Store links leave the site, and tapping one used to replace the page, so anyone
+installing the app lost it. The protocol test is deliberate: in-page anchors (`#download`, `#ios`)
+must not spawn tabs, and a future `myketUrl` picks up the behaviour without another edit.
+
+**Bidi.** A run of Latin or numeric text inside a Persian sentence reorders (UAX#9). `privacy.html`
+isolates `<code>` with `direction:ltr; unicode-bidi:isolate`, and one sentence there was rewritten
+to carry a single chip rather than two — two LTR islands in one RTL line scrambled the reading
+order even with isolation. The same class of bug is documented in `../CLAUDE.md` for the app.
+
+**Backup.** `privacy.html#backup` is the only place that explains what destroys a user's data and
+how to keep it. It is written against the real flow: «پشتیبان» inside an event, «بازیابی» on the
+event list, one JSON file **per event**. Re-read `TripDetailViewModel.ExportCommand` before
+changing any of those words.
 
 ## Regenerating the assets
 

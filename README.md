@@ -6,6 +6,8 @@ Persian (Farsi) UI with full right-to-left layout, Toman amounts, and Jalali dat
 > The name — *NamakPash* ("salt shaker") — is a Persian expression for splitting a shared bill.
 > The app's own interface is entirely in Persian; this repository is documented in English.
 
+**Website:** [namakpash.namakco.ir](https://namakpash.namakco.ir) · **Install:** [Cafe Bazaar](https://cafebazaar.ir/app/ir.narimani.splitt)
+
 ---
 
 ## Features
@@ -64,7 +66,10 @@ Money handling is the part of an app like this that is worth being strict about,
 
 ## Download
 
-Signed APKs are attached to each [release](https://github.com/AmirHosseinNarimaniRad/namakpash/releases).
+**[namakpash.namakco.ir](https://namakpash.namakco.ir)** — the landing page, or install directly
+from **[Cafe Bazaar](https://cafebazaar.ir/app/ir.narimani.splitt)**.
+
+Signed APKs are also attached to each [release](https://github.com/AmirHosseinNarimaniRad/namakpash/releases).
 Android 7.0 (API 24) or newer.
 
 Updates install over an existing copy without touching your data — the package id and signing key
@@ -87,6 +92,8 @@ Splitt.App/       # .NET MAUI app, net10.0-android
   Views/          # Matching XAML pages
   Helpers/        # Value converters
   Platforms/      # Android: HtmlToPdf (WebView -> PdfDocument canvas)
+docs/             # The landing page and privacy policy, served by GitHub Pages
+store/            # Store listing copy, screenshots and the sample report PDF
 ```
 
 The data and logic layer is a plain class library with no UI dependency, which is what lets the
@@ -148,7 +155,7 @@ The signed APK lands in `Splitt.App/bin/Release/net10.0-android/publish/`.
 ## Installing on a phone
 
 ```bash
-adb install namakpash-v1.2.apk
+adb install namakpash-v1.3.1.apk
 ```
 
 Or copy the APK to the phone, tap it in a file manager, and allow installation from unknown sources
