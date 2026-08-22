@@ -60,15 +60,23 @@ those webviews, and links in this audience are mostly shared through exactly tho
 
 ## Deploying
 
-Any static host works. GitHub Pages is the cheapest starting point and needs no build:
+Live at <https://namakpash.namakco.ir>. GitHub Pages serves this folder directly from `main` —
+that is why it is named `docs/`, which is the only subfolder Pages will serve without a build
+workflow. Pushing to `main` deploys; there is nothing to run.
 
-```bash
-# from a repo whose Pages source is the repository root
-git subtree push --prefix web origin gh-pages
+`CNAME` holds the custom domain and must survive any reorganisation of this folder — Pages reads
+it from the published root, and losing it silently reverts the site to `*.github.io`.
+
+DNS lives at ArvanCloud, delegated from IRNIC. The free plan allows one record *per type*, which
+is why the app sits on a subdomain via the single `CNAME` record rather than on the apex:
+
+```
+CNAME   namakpash   amirhosseinnarimanirad.github.io
+A       @           185.199.108.153
 ```
 
-Or copy the `web/` contents into a dedicated repo and enable Pages on it. There is no server
-state, so mirroring to a second host later costs nothing.
+A second product subdomain would need a second CNAME record, so it would also need a DNS provider
+without that limit. There is no server state, so mirroring to a second host later costs nothing.
 
 Note for when the PWA lands: GitHub Pages will not negotiate `Content-Encoding: br`, so a Blazor
 bundle's Brotli assets are served uncompressed. That is a reason to reconsider the host for

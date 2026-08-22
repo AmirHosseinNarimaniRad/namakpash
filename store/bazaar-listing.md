@@ -103,7 +103,7 @@ treat that as a listing violation, and it is not worth the risk for the traffic 
 | آیکون | `store/icon-512.png` (512×512) |
 | تصاویر | `store/screenshots/01-trips.png` … `07-dark-balances.png` (1080×2424) |
 | فایل نصبی | `dist/namakpash-v1.3.1.apk` (versionCode 5) |
-| حریم خصوصی | the deployed URL of `web/privacy.html` — required at submission |
+| حریم خصوصی | the deployed URL of `docs/privacy.html` — required at submission |
 
 Upload the screenshots in numbered order: the list, expenses, balances and report first, the
 editor and the two dark-mode shots after. `08-report-full.png` is the whole PDF report and is
