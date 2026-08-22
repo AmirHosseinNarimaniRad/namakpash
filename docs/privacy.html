@@ -65,7 +65,46 @@ footer{border-top:1px solid var(--line);background:var(--surface);padding-block:
 footer .wrap{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap}
 footer a{color:inherit;text-decoration:none}
 footer a:hover{color:var(--text)}
+
+/* theme toggle — same control and same stored key as the main page */
+:root{color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark}}
+:root[data-theme=dark]{color-scheme:dark}
+:root[data-theme=light]{color-scheme:light}
+.theme-toggle{
+  width:38px;height:38px;flex:none;margin-inline-start:10px;
+  display:grid;place-items:center;cursor:pointer;
+  border:1px solid var(--line);border-radius:11px;
+  background:var(--surface);color:var(--muted);
+  transition:color .18s ease,border-color .18s ease;
+}
+.theme-toggle:hover{color:var(--text);border-color:var(--accent)}
+.theme-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.theme-toggle svg{width:18px;height:18px;display:block}
+.theme-toggle .sun{display:none}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]) .theme-toggle .sun{display:block}
+  :root:not([data-theme=light]) .theme-toggle .moon{display:none}
+}
+:root[data-theme=dark] .theme-toggle .sun{display:block}
+:root[data-theme=dark] .theme-toggle .moon{display:none}
+:root[data-theme=light] .theme-toggle .sun{display:none}
+:root[data-theme=light] .theme-toggle .moon{display:block}
+@media (prefers-reduced-motion:reduce){.theme-toggle{transition:none}}
+/* the backup section carries the one warning that can cost someone their data */
+.warn{
+  background:var(--surface-2);border:1px solid var(--line);
+  border-inline-start:3px solid var(--accent);
+  border-radius:12px;padding:14px 16px;margin:18px 0;
+}
+.warn b{color:var(--text)}
+ol.steps{margin:16px 0;padding:0;list-style:none;counter-reset:step;display:grid;gap:12px}
+code{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;
+  padding:1px 6px;font-size:.92em;direction:ltr;unicode-bidi:isolate;white-space:nowrap}
+ol.steps li{counter-increment:step;display:flex;gap:11px;align-items:flex-start}
+ol.steps li::before{content:counter(step);flex:none;width:24px;height:24px;border-radius:8px;background:var(--accent-soft);color:var(--accent-deep);font-size:13px;font-weight:700;display:grid;place-items:center;margin-top:4px}
 </style>
+<script>try{var t=localStorage.getItem("namakpash-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 </head>
 <body>
 
@@ -91,13 +130,17 @@ footer a:hover{color:var(--text)}
       نمک‌پاش
     </a>
     <a class="back" href="index.html">بازگشت به صفحهٔ اصلی</a>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="تغییر ظاهر">
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.1 5.1l1.4 1.4M17.5 17.5l1.4 1.4M18.9 5.1l-1.4 1.4M6.5 17.5l-1.4 1.4"/></svg>
+    </button>
   </div>
 </header>
 
 <main>
   <div class="wrap">
     <h1>سیاست حریم خصوصی</h1>
-    <p class="sub">آخرین به‌روزرسانی: 25 مرداد 1405</p>
+    <p class="sub">آخرین به‌روزرسانی: 31 مرداد 1405</p>
 
     <div class="lead">
       <b>خلاصه:</b> نمک‌پاش هیچ اطلاعاتی از شما جمع‌آوری، ذخیره یا ارسال نمی‌کند.
@@ -119,8 +162,49 @@ footer a:hover{color:var(--text)}
       دیگر قرار نمی‌گیرد و در هیچ سروری نسخهٔ پشتیبان ندارد.
     </p>
     <p>
-      اگر برنامه را حذف کنید، این اطلاعات هم از بین می‌رود. برای همین امکان
-      «پشتیبان‌گیری» در برنامه وجود دارد.
+      اطلاعات شما فقط در همین یک جا وجود دارد. چون هیچ حساب کاربری و هیچ سروری در کار
+      نیست، نسخهٔ دومی جایی نگهداری نمی‌شود که بشود از آن بازیابی کرد. این همان معاملهٔ
+      آگاهانه‌ای است که نمک‌پاش کرده: در ازای اینکه داده‌هایتان هرگز از گوشی بیرون نرود،
+      مسئولیت نگهداری‌شان هم با خود شماست.
+    </p>
+
+    <h2 id="backup">چطور اطلاعاتم را از دست ندهم؟</h2>
+    <p>در این حالت‌ها همه‌چیز پاک می‌شود و راه برگرداندنش وجود ندارد:</p>
+    <ul>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg><span>برنامه را <strong>حذف نصب</strong> کنید.</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg><span>در تنظیمات گوشی، <strong>Clear data</strong> یا «پاک کردن داده‌های برنامه» را بزنید.</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg><span>گوشی را <strong>ریست کارخانه</strong> کنید، یا گم و خراب شود.</span></li>
+    </ul>
+
+    <div class="warn">
+      <b>پس بعد از هر رویداد یک پشتیبان بگیرید.</b> این تنها راه نجات اطلاعات است و
+      کمتر از یک دقیقه طول می‌کشد.
+    </div>
+
+    <p><strong>گرفتن پشتیبان:</strong></p>
+    <ol class="steps">
+      <li>رویداد را باز کنید.</li>
+      <li>از نوار بالا گزینهٔ <strong>«پشتیبان»</strong> را بزنید.</li>
+      <li>یک فایل پشتیبان با پسوند <code>.json</code> ساخته می‌شود و منوی
+          اشتراک‌گذاری اندروید باز می‌شود.</li>
+      <li>فایل را جایی بفرستید که بعداً پیدایش کنید — پیام‌های ذخیره‌شدهٔ خودتان در
+          تلگرام، ایمیل به خودتان، یک فضای ابری، یا انتقال به کامپیوتر.</li>
+    </ol>
+
+    <div class="warn">
+      <b>دقت کنید:</b> پشتیبان برای <strong>هر رویداد جداگانه</strong> گرفته می‌شود، نه
+      یک‌باره برای کل برنامه. اگر چند رویداد دارید، باید برای هرکدام جدا این کار را
+      انجام دهید.
+    </div>
+
+    <p><strong>برگرداندن پشتیبان:</strong> در فهرست رویدادها، از نوار بالا
+      <strong>«بازیابی»</strong> را بزنید و فایل را انتخاب کنید. اگر فایل سالم نباشد
+      برنامه به شما می‌گوید و چیزی را خراب نمی‌کند.</p>
+
+    <p>
+      فایل پشتیبان یک متن ساده و خواناست و نام شرکت‌کننده‌ها و مبلغ‌ها در آن پیداست.
+      از لحظه‌ای که آن را جایی می‌فرستید، سیاست حریم خصوصی همان‌جا حاکم است — پس جایی
+      بفرستیدش که به آن اعتماد دارید.
     </p>
 
     <h2>دسترسی‌های اندروید</h2>
@@ -172,5 +256,27 @@ footer a:hover{color:var(--text)}
   </div>
 </footer>
 
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement, KEY = "namakpash-theme";
+  var btn = document.getElementById("themeToggle");
+  if (!btn) return;
+  var mq = window.matchMedia("(prefers-color-scheme:dark)");
+  function current() {
+    return root.getAttribute("data-theme") || (mq.matches ? "dark" : "light");
+  }
+  function label() {
+    btn.setAttribute("aria-label", current() === "dark" ? "روشن کردن ظاهر" : "تیره کردن ظاهر");
+  }
+  btn.addEventListener("click", function () {
+    var next = current() === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem(KEY, next); } catch (e) {}
+    label();
+  });
+  label();
+})();
+</script>
 </body>
 </html>
