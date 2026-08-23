@@ -3,110 +3,122 @@
 @inject Store Store
 @inject NavigationManager Nav
 
+@* Mirrors Splitt.App/Views/ExpenseEditorPage.xaml: the big amount card, payer chips, the
+   description and date cards, the equal/manual toggle and the checkbox list of sharers. *@
+
 <PageTitle>@title</PageTitle>
 
-<header class="topbar">
-    <button class="btn btn-icon" @onclick="Back" aria-label="بازگشت">→</button>
+<header class="appbar">
+    <button class="back" @onclick="Back" aria-label="بازگشت">→</button>
     <h1>@title</h1>
-    @if (ExpenseId is not null)
-    {
-        <button class="btn btn-ghost btn-danger" @onclick="() => confirmDelete = true">حذف</button>
-    }
 </header>
 
 <main class="page">
-    <div class="stack">
-        <label class="field">
-            مبلغ (تومان)
-            <input inputmode="numeric" @bind="amountText" @bind:event="oninput" placeholder="۰" dir="ltr" />
-        </label>
-        <p class="hint">@amountPreview</p>
+    <div class="card amount-card">
+        <input inputmode="decimal" value="@amountText" @oninput="OnAmountInput" @onblur="FormatAmount" placeholder="0" />
+        <p class="caption preview">@amountPreview</p>
+    </div>
 
-        <label class="field">
-            بابت چه چیزی؟
-            <input type="text" @bind="description" @bind:event="oninput" placeholder="شام رستوران" />
-        </label>
-
-        <div class="field">
-            <span>چه کسی پرداخت کرد؟</span>
-            <div class="chips">
-                @foreach (var person in participants)
-                {
-                    <button class="chip @(payerId == person.Id ? "is-on" : "")"
-                            @onclick="() => payerId = person.Id">@person.Name</button>
-                }
-            </div>
-        </div>
-
-        <div class="field">
-            <span>سهم چه کسانی است؟</span>
-            <div class="chips">
-                @foreach (var person in participants)
-                {
-                    <button class="chip @(sharers.Contains(person.Id) ? "is-on" : "")"
-                            @onclick="() => ToggleSharer(person.Id)">@person.Name</button>
-                }
-            </div>
-        </div>
-
-        <div class="tabs">
-            <button class="tab @(customSplit ? "" : "is-on")" @onclick="() => customSplit = false">تقسیم مساوی</button>
-            <button class="tab @(customSplit ? "is-on" : "")" @onclick="StartCustomSplit">تقسیم دستی</button>
-        </div>
-
-        @if (customSplit)
+    <p class="section-label">چه کسی پرداخت کرد؟</p>
+    <div class="chips">
+        @foreach (var item in participants)
         {
-            <div class="stack">
-                @foreach (var person in participants.Where(p => sharers.Contains(p.Id)))
+            var person = item;
+            <button class="chip @(payerId == person.Id ? "on" : "")" @onclick="() => payerId = person.Id">@person.Name</button>
+        }
+    </div>
+
+    <div class="field-card">
+        <input type="text" @bind="description" @bind:event="oninput" placeholder="شرح (مثلاً: شام رستوران)" />
+    </div>
+
+    <button class="field-card" style="text-align:start; cursor:pointer; padding:14px 12px" @onclick="OpenDatePicker">
+        <span class="caption">تاریخ:</span>
+        <span style="font-weight:500; margin-inline-start:8px">@dateText</span>
+    </button>
+
+    <div class="row">
+        <span class="section-label">بین چه کسانی تقسیم شود؟</span>
+        <span class="segmented small" style="display:inline-grid">
+            <button class="@(customSplit ? "" : "on")" @onclick="SetEqualSplit">مساوی</button>
+            <button class="@(customSplit ? "on" : "")" @onclick="SetCustomSplit">دستی</button>
+        </span>
+    </div>
+
+    <div class="card" style="padding:4px 8px">
+        @foreach (var item in participants)
+        {
+            var person = item;
+            <div class="sharer" @onclick="() => ToggleSharer(person.Id)">
+                <input type="checkbox" checked="@sharers.Contains(person.Id)"
+                       @onclick:stopPropagation="true" @onchange="() => ToggleSharer(person.Id)" />
+                <span style="font-weight:500">@person.Name</span>
+                @if (customSplit)
                 {
-                    var id = person.Id;
-                    <label class="field">
-                        سهم @person.Name
-                        <input inputmode="numeric" dir="ltr"
-                               value="@(customShares.TryGetValue(id, out var v) ? v : "")"
-                               @oninput="e => SetShare(id, e.Value?.ToString())" />
-                    </label>
+                    <span class="share-box" @onclick:stopPropagation="true">
+                        <input inputmode="decimal" placeholder="0" disabled="@(!sharers.Contains(person.Id))"
+                               value="@(shareText.TryGetValue(person.Id, out var v) ? v : "")"
+                               @oninput="e => SetShare(person.Id, e.Value?.ToString())" />
+                    </span>
                 }
-                <p class="hint @(SplitBalanced ? "" : "debit")">@splitHint</p>
             </div>
         }
-        else if (sharers.Count > 0 && Amount > 0)
-        {
-            <p class="hint">@EqualSplitHint()</p>
-        }
+    </div>
 
-        <label class="field">
-            تاریخ
-            <div class="chips">
-                <select @bind="jalaliYear">
-                    @foreach (var year in Years()) { <option value="@year">@year</option> }
+    @if (splitHint.Length > 0)
+    {
+        <p class="caption" style="text-align:center">@splitHint</p>
+    }
+
+    @if (error is not null)
+    {
+        <div class="notice">@error</div>
+    }
+
+    @if (ExpenseId is not null)
+    {
+        <button class="btn btn-danger-text btn-block" @onclick="() => confirmDelete = true">حذف هزینه</button>
+    }
+
+    <div style="flex:1"></div>
+    <button class="btn btn-block" @onclick="SaveAsync">ذخیره</button>
+</main>
+
+@if (datePickerOpen)
+{
+    <div class="scrim" @onclick="() => datePickerOpen = false">
+        <div class="dialog" @onclick:stopPropagation="true">
+            <h2>انتخاب تاریخ</h2>
+            <div class="pickers">
+                <select @bind="pickDay">
+                    @for (var d = 1; d <= PersianDate.DaysInMonth(pickYear, pickMonth); d++) { <option value="@d">@d</option> }
                 </select>
-                <select @bind="jalaliMonth">
+                <select @bind="pickMonth" @bind:after="ClampDay">
                     @for (var m = 1; m <= 12; m++) { <option value="@m">@PersianDate.MonthNames[m - 1]</option> }
                 </select>
-                <select @bind="jalaliDay">
-                    @for (var d = 1; d <= PersianDate.DaysInMonth(jalaliYear, jalaliMonth); d++) { <option value="@d">@d</option> }
+                <select @bind="pickYear" @bind:after="ClampDay">
+                    @foreach (var year in Years()) { <option value="@year">@year</option> }
                 </select>
             </div>
-        </label>
-
-        @if (error is not null)
-        {
-            <div class="notice">@error</div>
-        }
-
-        <button class="btn btn-primary btn-block" disabled="@(!CanSave)" @onclick="SaveAsync">ذخیره</button>
+            <button class="btn btn-secondary btn-block" @onclick="Today">امروز</button>
+            <div class="two">
+                <button class="btn" @onclick="ConfirmDate">تأیید</button>
+                <button class="btn btn-secondary" @onclick="() => datePickerOpen = false">انصراف</button>
+            </div>
+        </div>
     </div>
-</main>
+}
 
 @if (confirmDelete)
 {
     <div class="scrim" @onclick="() => confirmDelete = false">
-        <div class="sheet" @onclick:stopPropagation="true">
+        <div class="dialog" @onclick:stopPropagation="true">
             <h2>حذف هزینه</h2>
-            <p>این هزینه پاک شود؟ برگرداندنش ممکن نیست.</p>
-            <button class="btn btn-danger btn-block" @onclick="DeleteAsync">حذف کن</button>
-            <button class="btn btn-ghost btn-block" @onclick="() => confirmDelete = false">انصراف</button>
+            <p class="caption" style="text-align:center">این هزینه پاک شود؟ برگرداندنش ممکن نیست.</p>
+            <div class="two">
+                <button class="btn" style="background:var(--debtor)" @onclick="DeleteAsync">حذف</button>
+                <button class="btn btn-secondary" @onclick="() => confirmDelete = false">انصراف</button>
+            </div>
         </div>
     </div>
 }
@@ -117,26 +129,29 @@
 
     List<Participant> participants = [];
     readonly HashSet<int> sharers = [];
-    readonly Dictionary<int, string> customShares = [];
+    readonly Dictionary<int, string> shareText = [];
 
     string title = "هزینهٔ جدید";
     string amountText = "";
+    string amountPreview = "تومان";
     string description = "";
+    string dateText = "";
     string splitHint = "";
     string? error;
     int payerId;
     bool customSplit;
     bool confirmDelete;
-    // Initialised here, not in OnParametersSetAsync: that method awaits before assigning, and the
-    // first render happens in between — PersianCalendar throws on year 0.
-    int jalaliYear = PersianDate.ToJalali(DateTime.Now).Year;
-    int jalaliMonth = PersianDate.ToJalali(DateTime.Now).Month;
-    int jalaliDay = PersianDate.ToJalali(DateTime.Now).Day;
+    bool datePickerOpen;
+
+    DateTime dateLocal = DateTime.Now;
+
+    // Initialised here rather than in OnParametersSetAsync, which awaits before assigning:
+    // the first render happens in between and PersianCalendar throws on year 0.
+    int pickYear = PersianDate.ToJalali(DateTime.Now).Year;
+    int pickMonth = PersianDate.ToJalali(DateTime.Now).Month;
+    int pickDay = PersianDate.ToJalali(DateTime.Now).Day;
 
     decimal Amount => MoneyFormat.Parse(amountText) ?? 0m;
-    string amountPreview => Amount > 0 ? MoneyFormat.FormatToman(Amount) : "تومان";
-    bool CanSave => Amount > 0 && payerId != 0 && sharers.Count > 0 && (!customSplit || SplitBalanced);
-    bool SplitBalanced => CustomTotal() == Amount;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -151,47 +166,64 @@
         {
             title = "هزینهٔ جدید";
             payerId = participants[0].Id;
+            sharers.Clear();
             foreach (var person in participants) sharers.Add(person.Id);
+            dateLocal = DateTime.Now;
+            dateText = PersianDate.ToLongDisplay(dateLocal);
+            UpdateSplitHint();
             return;
         }
 
         title = "ویرایش هزینه";
-        var expenses = await Store.Db.GetExpensesAsync(TripId);
-        var expense = expenses.FirstOrDefault(e => e.Id == ExpenseId);
+        var all = await Store.Db.GetExpensesAsync(TripId);
+        var expense = all.FirstOrDefault(e => e.Id == ExpenseId);
         if (expense is null)
         {
             Nav.NavigateTo($"trip/{TripId}");
             return;
         }
 
-        amountText = expense.Amount.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
+        amountText = MoneyFormat.Format(expense.Amount);
+        amountPreview = MoneyFormat.FormatToman(expense.Amount);
         description = expense.Description;
         payerId = expense.PaidById;
-
-        var (y, m, d) = PersianDate.ToJalali(expense.DateUtc.ToLocalTime());
-        jalaliYear = y; jalaliMonth = m; jalaliDay = d;
+        dateLocal = expense.DateUtc.ToLocalTime();
+        dateText = PersianDate.ToLongDisplay(dateLocal);
 
         var existing = await Store.Db.GetSharesForExpenseAsync(expense.Id);
         sharers.Clear();
+        shareText.Clear();
         foreach (var share in existing)
         {
             sharers.Add(share.ParticipantId);
-            customShares[share.ParticipantId] = share.Share.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
+            shareText[share.ParticipantId] = MoneyFormat.Format(share.Share);
         }
 
-        // If the stored shares are exactly what an equal split would produce, the expense was an
-        // equal split — re-opening it as "custom" would be a lie about how it was entered.
-        var equal = EqualSplitter.Split(expense.Amount, sharers.Count);
-        var stored = existing.OrderBy(s => s.ParticipantId).Select(s => s.Share).ToList();
-        var expected = existing.OrderBy(s => s.ParticipantId).Select((_, i) => equal[i]).ToList();
-        customSplit = !stored.SequenceEqual(expected);
+        // If the stored shares are exactly what an equal split produces, this was an equal
+        // split — reopening it as "manual" would misrepresent how it was entered. The remainder
+        // goes to the first participants in participant order, so the comparison has to use
+        // that same order.
+        var chosen = participants.Where(p => sharers.Contains(p.Id)).ToList();
+        var equal = EqualSplitter.Split(expense.Amount, chosen.Count);
+        var byParticipant = existing.ToDictionary(s => s.ParticipantId, s => s.Share);
+        customSplit = chosen.Where((p, i) => byParticipant.GetValueOrDefault(p.Id) != equal[i]).Any();
         UpdateSplitHint();
     }
 
-    IEnumerable<int> Years()
+    void OnAmountInput(ChangeEventArgs e)
     {
-        var (currentYear, _, _) = PersianDate.ToJalali(DateTime.Now);
-        for (var year = currentYear + 1; year >= currentYear - 3; year--) yield return year;
+        // Never rewrite the field while typing; show the separated form in the preview instead
+        // and prettify the input itself only on blur. (Same rule as the Android app.)
+        amountText = e.Value?.ToString() ?? "";
+        var parsed = MoneyFormat.Parse(amountText);
+        amountPreview = parsed is null or 0 ? "تومان" : MoneyFormat.FormatToman(parsed.Value);
+        UpdateSplitHint();
+    }
+
+    void FormatAmount()
+    {
+        var parsed = MoneyFormat.Parse(amountText);
+        amountText = parsed is null or 0 ? "" : MoneyFormat.Format(parsed.Value);
     }
 
     void ToggleSharer(int id)
@@ -200,18 +232,23 @@
         UpdateSplitHint();
     }
 
-    void StartCustomSplit()
+    void SetEqualSplit()
+    {
+        customSplit = false;
+        UpdateSplitHint();
+    }
+
+    void SetCustomSplit()
     {
         customSplit = true;
 
-        // Seed the boxes with the equal split, so "custom" starts from something correct rather
-        // than from empty fields the user has to fill before anything adds up.
-        if (Amount > 0 && sharers.Count > 0)
+        // Seed the boxes with the equal split so "manual" starts from something that adds up.
+        var chosen = participants.Where(p => sharers.Contains(p.Id)).ToList();
+        if (Amount > 0 && chosen.Count > 0)
         {
-            var shares = EqualSplitter.Split(Amount, sharers.Count);
-            var index = 0;
-            foreach (var person in participants.Where(p => sharers.Contains(p.Id)))
-                customShares[person.Id] = shares[index++].ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
+            var split = EqualSplitter.Split(Amount, chosen.Count);
+            for (var i = 0; i < chosen.Count; i++)
+                shareText[chosen[i].Id] = MoneyFormat.Format(split[i]);
         }
 
         UpdateSplitHint();
@@ -219,78 +256,121 @@
 
     void SetShare(int participantId, string? value)
     {
-        customShares[participantId] = value ?? "";
+        shareText[participantId] = value ?? "";
         UpdateSplitHint();
     }
 
-    decimal CustomTotal() => participants
-        .Where(p => sharers.Contains(p.Id))
-        .Sum(p => customShares.TryGetValue(p.Id, out var text) ? MoneyFormat.Parse(text) ?? 0m : 0m);
-
     void UpdateSplitHint()
     {
-        if (!customSplit) { splitHint = ""; return; }
+        var total = Amount;
+        var chosen = participants.Where(p => sharers.Contains(p.Id)).ToList();
 
-        var difference = Amount - CustomTotal();
-        splitHint = difference switch
+        if (chosen.Count == 0)
         {
-            0 => "سهم‌ها با مبلغ کل جور است.",
-            > 0 => $"{MoneyFormat.FormatToman(difference)} باقی مانده.",
-            _ => $"{MoneyFormat.FormatToman(-difference)} بیشتر از مبلغ کل است.",
-        };
+            splitHint = "حداقل یک نفر را انتخاب کن.";
+            return;
+        }
+
+        if (!customSplit)
+        {
+            if (total <= 0) { splitHint = ""; return; }
+            var split = EqualSplitter.Split(total, chosen.Count);
+            splitHint = split.Max() == split.Min()
+                ? $"سهم هر نفر: {MoneyFormat.FormatToman(split[0])}"
+                : $"سهم هر نفر: {MoneyFormat.Format(split.Min())} تا {MoneyFormat.Format(split.Max())} تومان";
+            return;
+        }
+
+        var entered = chosen.Sum(p => shareText.TryGetValue(p.Id, out var text) ? MoneyFormat.Parse(text) ?? 0m : 0m);
+        var remainder = total - entered;
+        splitHint = total <= 0 ? "" : remainder == 0
+            ? "سهم‌ها با مبلغ کل برابر است ✓"
+            : remainder > 0
+                ? $"{MoneyFormat.FormatToman(remainder)} باقی مانده"
+                : $"{MoneyFormat.FormatToman(-remainder)} بیشتر از مبلغ کل";
     }
 
-    string EqualSplitHint()
+    // ---- Jalali date picker ----
+
+    IEnumerable<int> Years()
     {
-        var shares = EqualSplitter.Split(Amount, sharers.Count);
-        return $"سهم هر نفر {MoneyFormat.FormatToman(shares[0])}" +
-               (shares.Distinct().Count() > 1 ? $" (چند نفر {MoneyFormat.FormatToman(shares[^1])})" : "");
+        var current = PersianDate.ToJalali(DateTime.Now).Year;
+        for (var year = current - 3; year <= current + 1; year++) yield return year;
     }
+
+    void OpenDatePicker()
+    {
+        var (y, m, d) = PersianDate.ToJalali(dateLocal);
+        pickYear = y; pickMonth = m; pickDay = d;
+        datePickerOpen = true;
+    }
+
+    void ClampDay()
+    {
+        var days = PersianDate.DaysInMonth(pickYear, pickMonth);
+        if (pickDay > days) pickDay = days;
+    }
+
+    void Today()
+    {
+        var (y, m, d) = PersianDate.ToJalali(DateTime.Now);
+        pickYear = y; pickMonth = m; pickDay = d;
+    }
+
+    void ConfirmDate()
+    {
+        // The picker chooses a day; the time of day rides along untouched.
+        dateLocal = PersianDate.FromJalali(pickYear, pickMonth, pickDay) + dateLocal.TimeOfDay;
+        dateText = PersianDate.ToLongDisplay(dateLocal);
+        datePickerOpen = false;
+    }
+
+    // ---- save / delete ----
 
     async Task SaveAsync()
     {
         error = null;
 
-        var date = PersianDate.FromJalali(jalaliYear, jalaliMonth, jalaliDay);
-        // Keep the time of day so two expenses on the same date stay in the order they were added.
-        var stamp = date.Date.Add(DateTime.Now.TimeOfDay).ToUniversalTime();
-
-        var expense = new Expense
-        {
-            Id = ExpenseId ?? 0,
-            TripId = TripId,
-            Description = string.IsNullOrWhiteSpace(description) ? "هزینه" : description.Trim(),
-            Amount = Amount,
-            PaidById = payerId,
-            DateUtc = stamp,
-            IsSettlement = false,
-        };
+        if (Amount <= 0) { error = "مبلغ را وارد کن."; return; }
+        if (payerId == 0) { error = "پرداخت‌کننده را انتخاب کن."; return; }
 
         var chosen = participants.Where(p => sharers.Contains(p.Id)).ToList();
-        List<ExpenseShare> shares;
+        if (chosen.Count == 0) { error = "حداقل یک نفر را انتخاب کن."; return; }
 
+        List<ExpenseShare> shares;
         if (customSplit)
         {
             shares = chosen
                 .Select(p => new ExpenseShare
                 {
                     ParticipantId = p.Id,
-                    Share = customShares.TryGetValue(p.Id, out var text) ? MoneyFormat.Parse(text) ?? 0m : 0m,
+                    Share = shareText.TryGetValue(p.Id, out var text) ? MoneyFormat.Parse(text) ?? 0m : 0m,
                 })
                 .Where(s => s.Share > 0)
                 .ToList();
+
+            if (shares.Sum(s => s.Share) != Amount)
+            {
+                error = "جمع سهم‌ها با مبلغ کل برابر نیست.";
+                return;
+            }
         }
         else
         {
-            var equal = EqualSplitter.Split(Amount, chosen.Count);
-            shares = chosen.Select((p, i) => new ExpenseShare { ParticipantId = p.Id, Share = equal[i] }).ToList();
+            var split = EqualSplitter.Split(Amount, chosen.Count);
+            shares = chosen.Select((p, i) => new ExpenseShare { ParticipantId = p.Id, Share = split[i] }).ToList();
         }
 
-        if (shares.Sum(s => s.Share) != Amount)
+        var expense = new Expense
         {
-            error = "جمع سهم‌ها با مبلغ کل برابر نیست.";
-            return;
-        }
+            Id = ExpenseId ?? 0,
+            TripId = TripId,
+            Description = description.Trim(),
+            Amount = Amount,
+            PaidById = payerId,
+            DateUtc = dateLocal.ToUniversalTime(),
+            IsSettlement = false,
+        };
 
         await Store.MutateAsync(db => db.SaveExpenseAsync(expense, shares));
         Back();

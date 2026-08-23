@@ -2,48 +2,61 @@
 @inject Store Store
 @inject NavigationManager Nav
 
-<PageTitle>@(trip?.Name ?? "رویداد")</PageTitle>
+@* Mirrors Splitt.App/Views/TripDetailPage.xaml — same tabs, same rows, same strings. The row
+   text is built exactly as TripDetailViewModel builds it, Bidi wrapping included. *@
 
-<header class="topbar">
-    <button class="btn btn-icon" @onclick='() => Nav.NavigateTo("")' aria-label="بازگشت">→</button>
-    <h1>
-        @(trip?.Name ?? "…")
-        <span class="sub">@totalText</span>
-    </h1>
-    <button class="btn btn-ghost" @onclick="ExportAsync">پشتیبان</button>
+<PageTitle>@tripName</PageTitle>
+
+<header class="appbar">
+    <button class="back" @onclick='() => Nav.NavigateTo("")' aria-label="بازگشت">→</button>
+    <h1>@tripName</h1>
+    <button class="action" @onclick="EditTrip">ویرایش</button>
+    <button class="action" @onclick="ExportAsync">پشتیبان</button>
 </header>
 
-<main class="page">
-    <div class="tabs">
-        <button class="tab @(tab == Tab.Expenses ? "is-on" : "")" @onclick="() => tab = Tab.Expenses">هزینه‌ها</button>
-        <button class="tab @(tab == Tab.Balances ? "is-on" : "")" @onclick="() => tab = Tab.Balances">تراز و تسویه</button>
-        <button class="tab @(tab == Tab.Report ? "is-on" : "")" @onclick="() => tab = Tab.Report">گزارش</button>
+<main class="page @(ShowsFab ? "has-fab" : "")">
+    <div class="segmented">
+        <button class="@(tab == Tab.Expenses ? "on" : "")" @onclick="() => tab = Tab.Expenses">هزینه‌ها</button>
+        <button class="@(tab == Tab.Balances ? "on" : "")" @onclick="() => tab = Tab.Balances">تراز و تسویه</button>
+        <button class="@(tab == Tab.Report ? "on" : "")" @onclick="() => tab = Tab.Report">گزارش</button>
     </div>
 
     @if (loading)
     {
-        <p class="hint" style="margin-top:var(--s4)">در حال خواندن…</p>
+        <p class="caption">در حال خواندن…</p>
     }
     else if (tab == Tab.Expenses)
     {
         @if (expenses.Count == 0)
         {
             <div class="empty">
-                <strong>هنوز هزینه‌ای ثبت نشده</strong>
-                <p>اولین هزینه را اضافه کن تا حساب‌وکتاب شروع شود.</p>
+                <div class="emoji">🧾</div>
+                <p class="section-label">هنوز هزینه‌ای ثبت نشده</p>
+                <p class="caption">اولین هزینه را اضافه کن تا حساب‌وکتاب شروع شود.</p>
             </div>
         }
         else
         {
-            <div class="stack" style="margin-top:var(--s4)">
-                @foreach (var expense in expenses)
+            <p class="caption" style="padding:0 4px">مجموع هزینه‌ها: <b>@totalText</b></p>
+            <div class="stack">
+                @foreach (var row in expenses)
                 {
-                    <button class="card card-tap" @onclick="() => EditExpense(expense.Id)">
-                        <div class="row-between">
-                            <h2>@expense.Description</h2>
-                            <span class="amount">@MoneyFormat.FormatToman(expense.Amount)</span>
+                    var expense = row;
+                    <button class="card tight @(expense.IsSettlement ? "settlement" : "")"
+                            @onclick="() => OpenExpense(expense.Id)">
+                        <div class="row" style="align-items:flex-start">
+                            <div style="min-width:0">
+                                <p style="font-weight:500">
+                                    @if (expense.IsSettlement) { <span>🤝 </span> }@expense.Description
+                                </p>
+                                <p class="caption" style="font-size:12px">@expense.Meta</p>
+                            </div>
+                            <span class="amount">@expense.AmountText</span>
                         </div>
-                        <p class="meta">@Bidi.Rtl($"{NameOf(expense.PaidById)} پرداخت کرد · {PersianDate.ToDisplay(expense.DateUtc)}")</p>
+                        @if (expense.SharesText.Length > 0)
+                        {
+                            <p class="hint" style="font-size:11px; margin-top:3px">@expense.SharesText</p>
+                        }
                     </button>
                 }
             </div>
@@ -51,94 +64,127 @@
     }
     else if (tab == Tab.Balances)
     {
-        <div class="stack" style="margin-top:var(--s4)">
-            @foreach (var person in participants)
+        <div class="card" style="display:flex; flex-direction:column; gap:14px">
+            @foreach (var balance in balances)
             {
-                var value = net.TryGetValue(person.Id, out var n) ? n : 0m;
-                var isCreditor = value > 0;
-                var isZero = value == 0;
-                <div class="card">
-                    <div class="row-between">
-                        <h2>@person.Name</h2>
-                        <span class="amount @(isZero ? "" : isCreditor ? "credit" : "debit")">
-                            @MoneyFormat.FormatToman(Math.Abs(value))
-                        </span>
-                    </div>
-                    <p class="meta">@(isZero ? "تسویه" : isCreditor ? "طلبکار" : "بدهکار")</p>
-                    @if (!isZero)
-                    {
-                        <div class="bar" style="margin-top:var(--s2)">
-                            <span class="@(isCreditor ? "credit" : "debit")" style="width:@(Fraction(value))%"></span>
-                        </div>
-                    }
+                <div class="balance-row">
+                    <span class="who">
+                        <b style="font-weight:500">@balance.Name</b>
+                        <span class="status @(balance.IsZero ? "" : balance.IsCreditor ? "credit" : "debit")">@balance.StatusText</span>
+                    </span>
+                    <span class="amount @(balance.IsZero ? "zero" : balance.IsCreditor ? "credit" : "debit")"
+                          style="font-size:15px">@balance.AmountText</span>
+                    <span class="bar">
+                        <i class="@(balance.IsCreditor ? "credit" : "debit")"
+                           style="width:@(balance.Percent)%; background:@(balance.IsCreditor ? "var(--creditor)" : "var(--debtor)")"></i>
+                    </span>
                 </div>
             }
+        </div>
 
-            <h2 style="margin-top:var(--s3)">پیشنهاد تسویه</h2>
-            @if (suggestions.Count == 0)
-            {
-                <p class="hint">همه تسویه‌اند — چیزی برای پرداخت نمانده.</p>
-            }
-            else
-            {
-                @foreach (var suggestion in suggestions)
+        @if (isSettled)
+        {
+            <div class="card settled-banner">
+                <span>✅</span>
+                <span>همه تسویه‌اند — چیزی برای پرداخت نمانده.</span>
+            </div>
+        }
+
+        @if (suggestions.Count > 0)
+        {
+            <p class="section-label" style="margin:8px 4px 0">پیشنهاد تسویه</p>
+            <div class="stack">
+                @foreach (var item in suggestions)
                 {
-                    <div class="card">
-                        <div class="row-between">
-                            <span>@Bidi.Rtl($"{NameOf(suggestion.FromParticipantId)} به {NameOf(suggestion.ToParticipantId)}")</span>
-                            <span class="amount">@MoneyFormat.FormatToman(suggestion.Amount)</span>
+                    var suggestion = item;
+                    <div class="card tight">
+                        <div class="row">
+                            <div>
+                                <p style="font-weight:500; font-size:14px">@suggestion.Text</p>
+                                <p class="caption">@suggestion.AmountText</p>
+                            </div>
+                            <button class="btn btn-secondary" @onclick="() => pending = suggestion">ثبت تسویه</button>
                         </div>
-                        <button class="btn btn-block" style="margin-top:var(--s3)"
-                                @onclick="() => AskSettle(suggestion)">ثبت تسویه</button>
                     </div>
                 }
-            }
-        </div>
+            </div>
+        }
     }
     else
     {
-        @if (report is null || report.People.Count == 0)
+        @if (report is null || expenses.Count == 0)
         {
             <div class="empty">
-                <strong>گزارشی نیست</strong>
-                <p>با ثبت اولین هزینه، گزارش رویداد ساخته می‌شود.</p>
+                <div class="emoji">📊</div>
+                <p class="section-label">هنوز گزارشی وجود ندارد</p>
+                <p class="caption">با ثبت اولین هزینه، گزارش رویداد ساخته می‌شود.</p>
             </div>
         }
         else
         {
-            <div class="stack" style="margin-top:var(--s4)">
-                <div class="card">
-                    <div class="row-between"><span>جمع هزینه‌ها</span><span class="amount">@MoneyFormat.FormatToman(report.Total)</span></div>
-                    <div class="row-between"><span class="meta">میانگین هر نفر</span><span class="meta">@MoneyFormat.FormatToman(report.AveragePerPerson)</span></div>
+            <div class="card">
+                <div class="report-head">
+                    <span class="caption">جمع هزینه‌ها</span><b>@totalText</b>
+                    <span class="caption">میانگین هر نفر</span><b>@averageText</b>
                 </div>
+            </div>
 
-                @foreach (var person in report.People)
+            <div class="stack">
+                @foreach (var item in reportRows)
                 {
-                    <div class="card">
-                        <div class="row-between">
-                            <h2>@person.Name</h2>
-                            <span class="amount @(person.Net == 0 ? "" : person.Net > 0 ? "credit" : "debit")">
-                                @MoneyFormat.FormatToman(Math.Abs(person.Net))
+                    var person = item;
+                    <button class="card tight" @onclick="() => Toggle(person)">
+                        <div class="person">
+                            <span class="chev">@(person.Expanded ? "▲" : "▼")</span>
+                            <span>
+                                <b style="font-weight:500; font-size:15px">@person.Name</b>
+                                <p class="caption" style="font-size:12px">@person.SummaryText</p>
+                            </span>
+                            <span class="net">
+                                <span class="amount @(person.IsZero ? "zero" : person.IsCreditor ? "credit" : "debit")"
+                                      style="font-size:15px">@person.NetAmountText</span>
+                                <p class="label">@person.NetLabel</p>
                             </span>
                         </div>
-                        <p class="meta">
-                            پرداخت @MoneyFormat.Format(person.Paid) · سهم @MoneyFormat.Format(person.Owed)
-                            @(person.Net == 0 ? " · تسویه" : person.Net > 0 ? " · طلبکار" : " · بدهکار")
-                        </p>
-                    </div>
-                }
 
-                <button class="btn btn-primary btn-block" @onclick="PrintReportAsync">گرفتن خروجی PDF</button>
-                <p class="hint">
-                    پنجرهٔ چاپ باز می‌شود؛ روی آیفون «Save to Files» و روی اندروید «ذخیره به‌صورت PDF» را بزن.
-                </p>
+                        @if (person.Expanded)
+                        {
+                            @if (person.PaidItems.Count > 0)
+                            {
+                                <p class="detail-head">پرداخت‌ها</p>
+                                @foreach (var line in person.PaidItems)
+                                {
+                                    <div class="detail-row">
+                                        <span>@line.Description <span class="when">@line.DateText</span></span>
+                                        <span class="amount" style="font-size:13px">@line.AmountText</span>
+                                    </div>
+                                }
+                            }
+                            @if (person.ShareItems.Count > 0)
+                            {
+                                <p class="detail-head">سهم‌ها</p>
+                                @foreach (var line in person.ShareItems)
+                                {
+                                    <div class="detail-row">
+                                        <span>@line.Description <span class="when">@line.DateText</span></span>
+                                        <span class="amount" style="font-size:13px">@line.AmountText</span>
+                                    </div>
+                                }
+                            }
+                            @if (person.SettledText.Length > 0)
+                            {
+                                <p class="caption" style="margin-top:8px">@person.SettledText</p>
+                            }
+                        }
+                    </button>
+                }
             </div>
         }
     }
 
     @if (message is not null)
     {
-        <div class="notice" style="margin-top:var(--s4)">@message</div>
+        <div class="notice">@message</div>
     }
 </main>
 
@@ -146,15 +192,21 @@
 {
     <button class="fab" @onclick="NewExpense">＋ هزینهٔ جدید</button>
 }
-
-@if (pendingSettlement is not null)
+else if (tab == Tab.Report && expenses.Count > 0)
 {
-    <div class="scrim" @onclick="() => pendingSettlement = null">
-        <div class="sheet" @onclick:stopPropagation="true">
+    <button class="fab" @onclick="ShareReportAsync">ارسال گزارش</button>
+}
+
+@if (pending is not null)
+{
+    <div class="scrim" @onclick="() => pending = null">
+        <div class="dialog" @onclick:stopPropagation="true">
             <h2>ثبت تسویه</h2>
-            <p>@Bidi.Rtl($"{NameOf(pendingSettlement.FromParticipantId)} به {NameOf(pendingSettlement.ToParticipantId)} مبلغ {MoneyFormat.FormatToman(pendingSettlement.Amount)} پرداخت کرد؟")</p>
-            <button class="btn btn-primary btn-block" @onclick="ConfirmSettleAsync">ثبت</button>
-            <button class="btn btn-ghost btn-block" @onclick="() => pendingSettlement = null">انصراف</button>
+            <p class="caption" style="text-align:center">@Bidi.Rtl($"{pending.Text} مبلغ {pending.AmountText} پرداخت کرد؟")</p>
+            <div class="two">
+                <button class="btn" @onclick="ConfirmSettleAsync">ثبت</button>
+                <button class="btn btn-secondary" @onclick="() => pending = null">انصراف</button>
+            </div>
         </div>
     </div>
 }
@@ -164,80 +216,187 @@
 
     enum Tab { Expenses, Balances, Report }
 
+    record ExpenseRow(int Id, string Description, string Meta, string SharesText, string AmountText, bool IsSettlement);
+    record BalanceRow(string Name, string AmountText, string StatusText, bool IsCreditor, bool IsZero, int Percent);
+    record SettlementRow(int FromId, int ToId, string Text, string AmountText, decimal Amount);
+    record ItemRow(string Description, string DateText, string AmountText);
+
+    sealed class PersonRow
+    {
+        public required string Name { get; init; }
+        public required string SummaryText { get; init; }
+        public required string NetAmountText { get; init; }
+        public required string NetLabel { get; init; }
+        public required bool IsCreditor { get; init; }
+        public required bool IsZero { get; init; }
+        public required List<ItemRow> PaidItems { get; init; }
+        public required List<ItemRow> ShareItems { get; init; }
+        public required string SettledText { get; init; }
+        public bool Expanded { get; set; }
+    }
+
     Tab tab = Tab.Expenses;
-    Trip? trip;
-    List<Participant> participants = [];
-    List<Expense> expenses = [];
-    List<ExpenseShare> shares = [];
-    Dictionary<int, decimal> net = [];
-    List<SettlementSuggestion> suggestions = [];
-    TripReport? report;
-    SettlementSuggestion? pendingSettlement;
+    string tripName = "";
     string totalText = "";
+    string averageText = "";
     string? message;
     bool loading = true;
+    bool isSettled;
+
+    List<Participant> participants = [];
+    List<ExpenseRow> expenses = [];
+    List<BalanceRow> balances = [];
+    List<SettlementRow> suggestions = [];
+    List<PersonRow> reportRows = [];
+    TripReport? report;
+    SettlementRow? pending;
+
+    bool ShowsFab => tab == Tab.Expenses || (tab == Tab.Report && expenses.Count > 0);
 
     protected override async Task OnParametersSetAsync() => await LoadAsync();
 
     async Task LoadAsync()
     {
         loading = true;
-        trip = await Store.Db.GetTripAsync(Id);
+
+        var trip = await Store.Db.GetTripAsync(Id);
         if (trip is null)
         {
             Nav.NavigateTo("");
             return;
         }
 
+        tripName = trip.Name;
         participants = await Store.Db.GetParticipantsAsync(Id);
         var all = await Store.Db.GetExpensesAsync(Id);
-        shares = await Store.Db.GetSharesForTripAsync(Id);
+        var shares = await Store.Db.GetSharesForTripAsync(Id);
 
-        // The expenses tab lists what people spent; settlements are payments between people and
-        // belong in the balances story, not the spending one.
-        expenses = all.Where(e => !e.IsSettlement).OrderByDescending(e => e.DateUtc).ThenByDescending(e => e.Id).ToList();
-        totalText = MoneyFormat.FormatToman(all.Where(e => !e.IsSettlement).Sum(e => e.Amount));
+        var names = participants.ToDictionary(p => p.Id, p => p.Name);
+        var order = participants.Select((p, i) => (p.Id, i)).ToDictionary(x => x.Id, x => x.i);
+        var sharesByExpense = shares.ToLookup(s => s.ExpenseId);
 
-        net = BalanceCalculator.ComputeNet(participants, all, shares);
-        suggestions = SettlementPlanner.Plan(net);
+        // ---- expense list: settlements belong here too, tinted and marked ----
+        expenses = [];
+        foreach (var expense in all)
+        {
+            var payer = names.GetValueOrDefault(expense.PaidById, "؟");
+            var date = PersianDate.ToDisplayWithTime(expense.DateUtc.ToLocalTime());
+
+            string meta, sharesText;
+            if (expense.IsSettlement)
+            {
+                var recipient = sharesByExpense[expense.Id]
+                    .Select(s => names.GetValueOrDefault(s.ParticipantId, "؟"))
+                    .FirstOrDefault() ?? "؟";
+                // RLM: with a Latin payer name the line would flip to LTR and read reversed.
+                meta = Bidi.Rtl($"{payer} به {recipient} · {date}");
+                sharesText = "";
+            }
+            else
+            {
+                meta = $"پرداخت: {payer} · {date}";
+                sharesText = "سهم‌ها: " + string.Join(" · ", sharesByExpense[expense.Id]
+                    .OrderBy(s => order.GetValueOrDefault(s.ParticipantId, int.MaxValue))
+                    .Select(s => $"{names.GetValueOrDefault(s.ParticipantId, "؟")} {MoneyFormat.Format(s.Share)}"));
+            }
+
+            expenses.Add(new ExpenseRow(
+                expense.Id,
+                expense.IsSettlement ? "تسویه" : (expense.Description.Length > 0 ? expense.Description : "بدون شرح"),
+                meta,
+                sharesText,
+                MoneyFormat.Format(expense.Amount),
+                expense.IsSettlement));
+        }
+
+        // ---- balances: always derived, never stored ----
+        var net = BalanceCalculator.ComputeNet(participants, all, shares);
+        var maxAbs = net.Values.Select(Math.Abs).DefaultIfEmpty(0m).Max();
+
+        balances = participants.Select(p =>
+        {
+            var value = net[p.Id];
+            return new BalanceRow(
+                p.Name,
+                MoneyFormat.Format(Math.Abs(value)),
+                value == 0 ? "تسویه" : value > 0 ? "طلبکار" : "بدهکار",
+                IsCreditor: value > 0,
+                IsZero: value == 0,
+                Percent: maxAbs == 0 ? 0 : (int)Math.Round(Math.Abs(value) / maxAbs * 100));
+        }).ToList();
+
+        suggestions = SettlementPlanner.Plan(net)
+            // RLM: "Sara به Amir" must not render as "Amir به Sara".
+            .Select(s => new SettlementRow(
+                s.FromParticipantId,
+                s.ToParticipantId,
+                Bidi.Rtl($"{names[s.FromParticipantId]} به {names[s.ToParticipantId]}"),
+                MoneyFormat.FormatToman(s.Amount),
+                s.Amount))
+            .ToList();
+
+        var realExpenses = all.Where(e => !e.IsSettlement).ToList();
+        isSettled = suggestions.Count == 0 && realExpenses.Count > 0;
+
+        // ---- report ----
         report = ReportBuilder.Build(participants, all, shares);
+        totalText = MoneyFormat.FormatToman(report.Total);
+        averageText = MoneyFormat.FormatToman(report.AveragePerPerson);
+
+        var expanded = reportRows.Where(r => r.Expanded).Select(r => r.Name).ToHashSet();
+        reportRows = report.People.Select(p =>
+        {
+            var settledParts = new List<string>();
+            if (p.SettledPaid > 0) settledParts.Add($"تسویهٔ پرداختی: {MoneyFormat.Format(p.SettledPaid)}");
+            if (p.SettledReceived > 0) settledParts.Add($"تسویهٔ دریافتی: {MoneyFormat.Format(p.SettledReceived)}");
+
+            return new PersonRow
+            {
+                Name = p.Name,
+                SummaryText = $"پرداخت: {MoneyFormat.Format(p.Paid)} · سهم: {MoneyFormat.Format(p.Owed)}",
+                NetAmountText = MoneyFormat.Format(Math.Abs(p.Net)),
+                NetLabel = p.Net == 0 ? "تسویه" : p.Net > 0 ? "طلبکار" : "بدهکار",
+                IsCreditor = p.Net > 0,
+                IsZero = p.Net == 0,
+                PaidItems = ToItemRows(p.PaidItems),
+                ShareItems = ToItemRows(p.ShareItems),
+                SettledText = string.Join(" · ", settledParts),
+                Expanded = expanded.Contains(p.Name),
+            };
+        }).ToList();
 
         loading = false;
     }
 
-    string NameOf(int participantId) =>
-        participants.FirstOrDefault(p => p.Id == participantId)?.Name ?? "—";
+    static List<ItemRow> ToItemRows(IReadOnlyList<ReportItem> items) =>
+        items.Select(i => new ItemRow(
+            i.Description.Length > 0 ? i.Description : "بدون شرح",
+            PersianDate.ToDisplay(i.DateUtc.ToLocalTime()),
+            MoneyFormat.Format(i.Amount)))
+        .ToList();
 
-    int Fraction(decimal value)
-    {
-        var largest = net.Values.Select(Math.Abs).DefaultIfEmpty(0m).Max();
-        if (largest == 0) return 0;
-        return (int)Math.Round(Math.Abs(value) / largest * 100);
-    }
+    void Toggle(PersonRow person) => person.Expanded = !person.Expanded;
 
+    void EditTrip() => Nav.NavigateTo($"trip-editor/{Id}");
     void NewExpense() => Nav.NavigateTo($"trip/{Id}/expense");
-
-    void EditExpense(int expenseId) => Nav.NavigateTo($"trip/{Id}/expense/{expenseId}");
-
-    void AskSettle(SettlementSuggestion suggestion) => pendingSettlement = suggestion;
+    void OpenExpense(int expenseId) => Nav.NavigateTo($"trip/{Id}/expense/{expenseId}");
 
     async Task ConfirmSettleAsync()
     {
-        var suggestion = pendingSettlement!;
-        pendingSettlement = null;
+        var suggestion = pending!;
+        pending = null;
 
         // A settlement is just an expense: the debtor pays, the creditor holds the whole share.
-        // That is why nothing in the balance code needs a special case for it.
         var expense = new Expense
         {
             TripId = Id,
             Description = "تسویه",
             Amount = suggestion.Amount,
-            PaidById = suggestion.FromParticipantId,
+            PaidById = suggestion.FromId,
             DateUtc = DateTime.UtcNow,
             IsSettlement = true,
         };
-        var share = new ExpenseShare { ParticipantId = suggestion.ToParticipantId, Share = suggestion.Amount };
+        var share = new ExpenseShare { ParticipantId = suggestion.ToId, Share = suggestion.Amount };
 
         await Store.MutateAsync(db => db.SaveExpenseAsync(expense, [share]));
         await LoadAsync();
@@ -245,28 +404,35 @@
 
     async Task ExportAsync()
     {
+        var trip = await Store.Db.GetTripAsync(Id);
         if (trip is null) return;
+
         var all = await Store.Db.GetExpensesAsync(Id);
+        var shares = await Store.Db.GetSharesForTripAsync(Id);
         var json = TripExporter.ToJson(trip, participants, all, shares);
+
         await Store.DownloadTextAsync($"{SafeName(trip.Name)}.json", json);
         message = "فایل پشتیبان ساخته شد. جایی نگهش دار که بعداً پیدایش کنی.";
     }
 
-    async Task PrintReportAsync()
+    async Task ShareReportAsync()
     {
+        var trip = await Store.Db.GetTripAsync(Id);
         if (trip is null) return;
-        var all = await Store.Db.GetExpensesAsync(Id);
 
-        // The same formatter the Android app prints from, so the two PDFs are the same document.
+        var all = await Store.Db.GetExpensesAsync(Id);
+        var shares = await Store.Db.GetSharesForTripAsync(Id);
+
+        // The same formatter the Android app prints from, so both produce the same document.
         var (html, _) = ReportHtmlFormatter.Format(
-            trip.Name, participants, all, shares, DateTime.Now, "fonts/");
+            trip.Name, participants, all, shares, DateTime.Now, "../fonts/");
 
         await Store.PrintHtmlAsync(html);
     }
 
     static string SafeName(string name)
     {
-        var cleaned = new string(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '-' : c).ToArray());
-        return string.IsNullOrWhiteSpace(cleaned) ? "namakpash" : cleaned.Trim();
+        var cleaned = new string(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '-' : c).ToArray()).Trim();
+        return cleaned.Length == 0 ? "namakpash" : cleaned;
     }
 }

@@ -1,0 +1,200 @@
+@page "/trip-editor"
+@page "/trip-editor/{Id:int}"
+@inject Store Store
+@inject NavigationManager Nav
+
+<PageTitle>@title</PageTitle>
+
+<header class="appbar">
+    <button class="back" @onclick="Back" aria-label="بازگشت">→</button>
+    <h1>@title</h1>
+</header>
+
+<main class="page">
+    <p class="section-label">نام رویداد</p>
+    <div class="field-card">
+        <input type="text" @bind="name" @bind:event="oninput" placeholder="مثلاً: سفر شمال" />
+    </div>
+
+    <p class="section-label" style="margin-top:8px">شرکت‌کننده‌ها</p>
+    <div class="field-card">
+        <div style="display:flex; align-items:center; gap:8px">
+            <input type="text" @bind="newName" @bind:event="oninput" @onkeydown="OnNameKey" placeholder="نام (مثلاً: امیر)" />
+            <button class="btn btn-secondary" @onclick="AddParticipant">افزودن</button>
+        </div>
+    </div>
+
+    <div class="pills">
+        @foreach (var person in people)
+        {
+            var item = person;
+            <span class="pill">
+                @item.Name
+                @if (item.CanRemove)
+                {
+                    <button @onclick="() => Remove(item)" aria-label="حذف">✕</button>
+                }
+            </span>
+        }
+    </div>
+
+    @if (isEditing)
+    {
+        <p class="caption">کسانی که در هزینه‌ای سهیم بوده‌اند قابل حذف نیستند.</p>
+    }
+
+    @if (error is not null)
+    {
+        <div class="notice">@error</div>
+    }
+
+    @if (isEditing)
+    {
+        <button class="btn btn-danger-text btn-block" style="margin-top:16px" @onclick="() => confirmDelete = true">حذف رویداد</button>
+    }
+
+    <div style="flex:1"></div>
+    <button class="btn btn-block" disabled="@(!CanSave)" @onclick="SaveAsync">ذخیره</button>
+</main>
+
+@if (confirmDelete)
+{
+    <div class="scrim" @onclick="() => confirmDelete = false">
+        <div class="dialog" @onclick:stopPropagation="true">
+            <h2>حذف رویداد</h2>
+            <p class="caption" style="text-align:center">
+                «@name» و همهٔ هزینه‌هایش پاک می‌شوند. این کار برگشت‌پذیر نیست.
+            </p>
+            <div class="two">
+                <button class="btn" style="background:var(--debtor)" @onclick="DeleteAsync">حذف</button>
+                <button class="btn btn-secondary" @onclick="() => confirmDelete = false">انصراف</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    sealed class Person
+    {
+        public int Id { get; init; }
+        public required string Name { get; set; }
+        public bool CanRemove { get; init; } = true;
+    }
+
+    readonly List<Person> people = [];
+    string title = "رویداد جدید";
+    string name = "";
+    string newName = "";
+    string? error;
+    bool isEditing;
+    bool confirmDelete;
+
+    bool CanSave => name.Trim().Length > 0 && people.Count > 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        people.Clear();
+        isEditing = Id is not null;
+        title = isEditing ? "ویرایش رویداد" : "رویداد جدید";
+
+        if (Id is null) return;
+
+        var trip = await Store.Db.GetTripAsync(Id.Value);
+        if (trip is null)
+        {
+            Nav.NavigateTo("");
+            return;
+        }
+
+        name = trip.Name;
+        foreach (var participant in await Store.Db.GetParticipantsAsync(trip.Id))
+        {
+            // Someone who already took a share of an expense cannot be removed without
+            // rewriting history, so the app does not offer it.
+            var used = await Store.Db.ParticipantHasActivityAsync(participant.Id);
+            people.Add(new Person { Id = participant.Id, Name = participant.Name, CanRemove = !used });
+        }
+    }
+
+    async Task OnNameKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await AddParticipant();
+    }
+
+    Task AddParticipant()
+    {
+        var candidate = newName.Trim();
+        error = null;
+
+        if (candidate.Length == 0) return Task.CompletedTask;
+        if (people.Any(p => p.Name == candidate))
+        {
+            error = "این اسم قبلاً اضافه شده.";
+            return Task.CompletedTask;
+        }
+
+        people.Add(new Person { Name = candidate });
+        newName = "";
+        return Task.CompletedTask;
+    }
+
+    void Remove(Person person) => people.Remove(person);
+
+    async Task SaveAsync()
+    {
+        error = null;
+        var tripName = name.Trim();
+
+        if (Id is null)
+        {
+            var created = await Store.MutateAsync(db => db.CreateTripAsync(tripName, people.Select(p => p.Name)));
+            Nav.NavigateTo($"trip/{created.Id}");
+            return;
+        }
+
+        var trip = await Store.Db.GetTripAsync(Id.Value);
+        if (trip is null) { Nav.NavigateTo(""); return; }
+
+        await Store.MutateAsync(async db =>
+        {
+            trip.Name = tripName;
+            await db.UpdateTripAsync(trip);
+
+            var existing = await db.GetParticipantsAsync(trip.Id);
+
+            foreach (var person in people.Where(p => p.Id == 0))
+                await db.AddParticipantAsync(new Participant { TripId = trip.Id, Name = person.Name });
+
+            foreach (var person in people.Where(p => p.Id != 0))
+            {
+                var match = existing.FirstOrDefault(e => e.Id == person.Id);
+                if (match is not null && match.Name != person.Name)
+                {
+                    match.Name = person.Name;
+                    await db.UpdateParticipantAsync(match);
+                }
+            }
+
+            foreach (var gone in existing.Where(e => people.All(p => p.Id != e.Id)))
+                await db.DeleteParticipantAsync(gone.Id);
+        });
+
+        Nav.NavigateTo($"trip/{trip.Id}");
+    }
+
+    async Task DeleteAsync()
+    {
+        confirmDelete = false;
+        if (Id is null) return;
+        await Store.MutateAsync(db => db.DeleteTripAsync(Id.Value));
+        Nav.NavigateTo("");
+    }
+
+    void Back()
+    {
+        if (Id is null) Nav.NavigateTo("");
+        else Nav.NavigateTo($"trip/{Id.Value}");
+    }
+}
