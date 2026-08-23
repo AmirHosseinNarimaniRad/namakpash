@@ -40,3 +40,7 @@ TestResults/
 .DS_Store
 .AppleDouble
 ._*
+
+# Local-only: the self-test route is served by 404.html on Pages; this folder only exists
+# so a plain static server can serve the route while testing.
+docs/app/selftest/

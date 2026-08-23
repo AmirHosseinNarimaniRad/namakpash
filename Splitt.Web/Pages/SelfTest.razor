@@ -19,7 +19,7 @@
                     <h2>@step.Name</h2>
                     <span class="amount @(step.Ok ? "credit" : "debit")">@(step.Ok ? "PASS" : "FAIL")</span>
                 </div>
-                <p class="meta" dir="ltr" style="text-align:start">@step.Detail</p>
+                <p class="caption" dir="ltr" style="text-align:start">@step.Detail</p>
             </div>
         }
         @if (running) { <p class="hint">در حال اجرا…</p> }

@@ -58,7 +58,13 @@ button, input, textarea, select { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) { .boot-mark { animation: none; } }
 
 /* ---------- shell: title row, then page ---------- */
-.shell { min-height: 100dvh; display: flex; flex-direction: column; max-width: 720px; margin-inline: auto; }
+.shell { min-height: 100dvh; display: flex; flex-direction: column; max-width: 720px; margin-inline: auto; min-width: 0; }
+/* A long event name or description must wrap rather than widen the page: an RTL layout that
+   scrolls sideways puts the amounts off-screen. */
+.card, .notice, .caption, .hint, .detail-row, .balance-row { min-width: 0; overflow-wrap: anywhere; }
+/* Belt and braces: nothing inside a page may widen it, whatever class it carries. */
+.page, .page * { min-width: 0; }
+.page p { overflow-wrap: anywhere; }
 .appbar {
   display: flex; align-items: center; gap: 14px;
   padding: calc(14px + env(safe-area-inset-top)) 16px 10px;
