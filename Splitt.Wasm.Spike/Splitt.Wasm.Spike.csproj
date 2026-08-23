@@ -5,6 +5,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <!-- sqlite-net ships e_sqlite3.a for browser-wasm, but it is only linked when the
+         wasm-tools workload relinks natively. Without this the runtime throws
+         DllNotFoundException the moment a statement runs. -->
+    <WasmBuildNative>true</WasmBuildNative>
   </PropertyGroup>
 
   <ItemGroup>

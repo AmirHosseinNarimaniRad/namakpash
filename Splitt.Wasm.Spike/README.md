@@ -14,7 +14,7 @@ dotnet run --project Splitt.Wasm.Spike        # then open http://localhost:5199
 
 ## Result (2026-08-23, .NET 10.0.10, browser-wasm)
 
-**63 of 64 test cases pass in the browser. `Splitt.Core` needed no changes at all.**
+**All 64 test cases pass in the browser. `Splitt.Core` needed no changes at all — `Data/` included.**
 
 | Probe | Result |
 |---|---|
@@ -24,11 +24,10 @@ dotnet run --project Splitt.Wasm.Spike        # then open http://localhost:5199
 | `decimal` arithmetic | `0.1 + 0.2 == 0.3` — real decimals, not doubles |
 | Amount TEXT round-trip | `1234567.89` → `"1234567.89"` → `1234567.89` under InvariantCulture |
 | Equal split remainder | `33334 + 33333 + 33333 = 100000` (invariant #4 holds) |
-| SQLite (sqlite-net) | **fails** — `DllNotFoundException: e_sqlite3` |
+| SQLite (sqlite-net) | creates the schema and runs statements — with `WasmBuildNative` on |
 
-The single failing test is `ExportImportTests.Database_ImportRoundTrip_PreservesBalances`, the one
-test that opens a `SplittDatabase`. Every other test — balances, settlement planning, the report
-builder, the PDF page-break arithmetic, Bidi, Persian dates — passes untouched.
+Balances, settlement planning, the report builder, the PDF page-break arithmetic, Bidi, Persian
+dates and the database round-trip all pass untouched.
 
 ## What this settles
 
@@ -36,31 +35,25 @@ builder, the PDF page-break arithmetic, Bidi, Persian dates — passes untouched
   invariants and its tests carry over with zero edits.
 - **Globalization is not a problem.** The plan flagged a risk that Blazor might run
   globalization-invariant and break `PersianCalendar`. It does not; ICU data is present by default.
-- **The sqlite-net coupling is wider than the plan assumed but does not block the build.** The
-  attributes sit on the models (`Trip`, `Expense`, `ExpenseShare`, `Participant`), not only in
-  `Data/`, so the package comes along for the ride — and that is fine. It only fails when a
-  statement actually runs.
+- **SQLite runs in the browser.** `sqlite-net` ships a `browser-wasm` build of `e_sqlite3`, and
+  `<WasmBuildNative>true</WasmBuildNative>` links it in. `SplittDatabase` creates its schema and
+  serves queries unmodified, so `Data/` does not have to be rewritten for the browser.
+- The sqlite-net attributes sit on the models (`Trip`, `Expense`, `ExpenseShare`, `Participant`),
+  not only in `Data/` — wider coupling than the plan assumed, and now harmless.
+
+Requirements: the `wasm-tools` workload (`sudo dotnet workload install wasm-tools`) and
+`<WasmBuildNative>true</WasmBuildNative>` in the csproj. Without both, the runtime throws
+`DllNotFoundException: e_sqlite3` the moment a statement runs — the build only warns.
 
 ## What is still open
 
-`sqlite-net` ships a `browser-wasm` build of `e_sqlite3`, and the build says so:
+**Persistence, which is now the whole problem.** SQLite works, but Emscripten's filesystem lives in
+memory: the database at `/tmp/…db3` is gone on reload. Something has to sync the file to OPFS or
+IndexedDB, and *that* — not the query layer — is what the storage design has to solve. It is also
+where the durability risk in the PWA plan concentrates, since browser storage is evictable in a way
+an APK's private SQLite file is not.
 
-```
-warning: @(NativeFileReference) is not empty, but the native references won't be linked in,
-because neither $(WasmBuildNative), nor $(RunAOTCompilation) are 'true'.
-NativeFileReference=…/runtimes/browser-wasm/nativeassets/net9.0/e_sqlite3.a
-```
-
-Native relinking needs the `wasm-tools` workload, which is not installed on this machine:
-
-```bash
-sudo dotnet workload install wasm-tools     # dotnet lives in /usr/local/share/dotnet (root-owned)
-```
-
-With it, `<WasmBuildNative>true</WasmBuildNative>` should link SQLite in and the last test may
-pass too. **That would not by itself solve persistence**: Emscripten's filesystem is in memory, so
-the database file still has to be synced to OPFS or IndexedDB by hand. Reusing `Data/` verbatim is
-therefore a real option to evaluate, not a foregone conclusion — the alternative remains rewriting
-`Splitt.Core/Data/` (171 lines) against browser storage directly.
+Untested here and worth knowing before any UI work: download size with native relinking on, and
+whether the same setup survives AOT (`RunAOTCompilation`).
 
 This project is a spike. It is not the PWA and is not meant to grow into it.
