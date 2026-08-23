@@ -206,6 +206,16 @@ h2{font-size:clamp(24px,3.6vw,32px);font-weight:700;line-height:1.35}
 :root[data-theme=dark] .badge{color:#7FE8DC}
 .btn-block{width:100%;justify-content:center}
 .btn[aria-disabled=true]{opacity:.5;pointer-events:none}
+/* same component as privacy.html's .warn — the one thing that can cost someone their data */
+.warn{
+  max-width:760px;margin:26px auto 0;scroll-margin-top:84px;
+  background:var(--surface-2);border:1px solid var(--line);
+  border-inline-start:3px solid var(--accent);
+  border-radius:12px;padding:16px 18px;
+  font-size:15px;color:var(--muted);line-height:1.9;
+}
+.warn p+p{margin-top:9px}
+.warn b,.warn strong{color:var(--text);font-weight:600}
 
 /* ---------- ios steps ---------- */
 .steps{counter-reset:s;display:grid;gap:14px;margin-top:20px}
@@ -368,7 +378,7 @@ footer a:hover{color:var(--text)}
       <div class="card">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></div>
         <h3>پشتیبان‌گیری</h3>
-        <p>هر رویداد را به شکل یک فایل ذخیره کن و هر وقت خواستی روی همان گوشی یا گوشی دیگر برگردان.</p>
+        <p>اطلاعات فقط روی همین گوشی است و هیچ نسخهٔ دومی جایی نگه داشته نمی‌شود. از هر رویداد یک فایل پشتیبان بگیر تا اگر گوشی از دست رفت، حساب‌ها بمانند.</p>
       </div>
     </div>
   </div>
@@ -419,6 +429,15 @@ footer a:hover{color:var(--text)}
       <p id="dlIntro">نسخهٔ اندروید را نصب کن و همان‌جا شروع کن. هیچ حسابی لازم نیست.</p>
     </div>
     <div class="dl" id="dlCards"></div>
+
+    <div class="warn" id="backup-note">
+      <p><b>یک نکته که بعد از نصب به کارت می‌آید:</b> اطلاعاتت فقط روی همین گوشی است.
+        اگر برنامه را حذف نصب کنی، داده‌هایش را پاک کنی یا گوشی گم و ریست شود، همه‌چیز
+        می‌رود و راه برگرداندنش نیست — چون نه حسابی در کار است نه سروری.</p>
+      <p>تنها راه نجات، گرفتن پشتیبان است: <strong>برای هر رویداد جداگانه</strong>، با
+        دکمهٔ «پشتیبان» داخل همان رویداد. کمتر از یک دقیقه طول می‌کشد.
+        <a href="privacy.html#backup">راهنمای پشتیبان‌گیری و بازیابی ←</a></p>
+    </div>
   </div>
 </section>
 
@@ -501,7 +520,8 @@ footer a:hover{color:var(--text)}
       '<a class="btn btn-primary" href="' + androidHref + '"' + linkAttrs(androidHref) + '>' +
       ICON.android + "دریافت از بازار" + '</a>' +
       '<a class="btn btn-ghost" href="#features">امکانات برنامه</a>';
-    note.textContent = "رایگان · بدون تبلیغات · بدون هیچ دسترسی";
+    note.innerHTML = "رایگان · بدون تبلیغات · بدون هیچ دسترسی<br>" +
+      '<a href="#backup-note">اطلاعات فقط روی گوشی می‌ماند؛ پشتیبان گرفتن یادت نرود</a>';
   }
 
   // ---- download cards ----
