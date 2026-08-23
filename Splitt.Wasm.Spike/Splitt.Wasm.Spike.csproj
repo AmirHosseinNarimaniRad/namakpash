@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Splitt.Core\Splitt.Core.csproj" />
+  </ItemGroup>
+
+  <!-- The spike runs the real test suite, not a copy of it: the test sources are compiled
+       into this app and executed in the browser by Spike/TestRunner.cs. Only xunit's
+       attributes and assertions are needed for that; Microsoft.NET.Test.Sdk is a desktop
+       host and is deliberately not referenced. -->
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <Compile Include="..\Splitt.Tests\*.cs" LinkBase="Tests" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

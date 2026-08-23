@@ -1,0 +1,90 @@
+@page "/"
+@using Splitt.Wasm.Spike
+
+<PageTitle>Splitt.Core on WebAssembly</PageTitle>
+
+<h1>Splitt.Core on WebAssembly</h1>
+<p class="lede">
+    The real test suite from <code>Splitt.Tests</code>, compiled into a Blazor WebAssembly app and
+    executed by the browser. Nothing here is a reimplementation — the same source files run.
+</p>
+
+@if (probes is null)
+{
+    <p><em>Running…</em></p>
+}
+else
+{
+    <h2>Environment</h2>
+    <table class="probes">
+        @foreach (var probe in probes)
+        {
+            <tr class="@(probe.Ok ? "ok" : "bad")">
+                <td>@(probe.Ok ? "PASS" : "FAIL")</td>
+                <td>@probe.Name</td>
+                <td><code>@probe.Detail</code></td>
+            </tr>
+        }
+    </table>
+
+    <h2>Test suite</h2>
+    @if (results is null)
+    {
+        <p><em>Running…</em></p>
+    }
+    else
+    {
+        var passed = results.Count(r => r.Passed);
+        var failed = results.Count - passed;
+
+        <p class="summary @(failed == 0 ? "ok" : "bad")">
+            @passed / @results.Count passed@(failed == 0 ? "" : $" — {failed} failed")
+            <span class="muted">· @results.Sum(r => r.Ms).ToString("F0") ms</span>
+        </p>
+
+        @if (failed > 0)
+        {
+            <h3>Failures</h3>
+            <ul class="failures">
+                @foreach (var result in results.Where(r => !r.Passed))
+                {
+                    <li>
+                        <b>@result.Class.@result.Display</b>
+                        <div><code>@result.Error</code></div>
+                    </li>
+                }
+            </ul>
+        }
+
+        <h3>By class</h3>
+        <table class="probes">
+            @foreach (var group in results.GroupBy(r => r.Class).OrderBy(g => g.Key))
+            {
+                var groupFailed = group.Count(r => !r.Passed);
+                <tr class="@(groupFailed == 0 ? "ok" : "bad")">
+                    <td>@(groupFailed == 0 ? "PASS" : "FAIL")</td>
+                    <td>@group.Key</td>
+                    <td><code>@group.Count() cases</code></td>
+                </tr>
+            }
+        </table>
+    }
+}
+
+@code {
+    List<EnvironmentProbe.Probe>? probes;
+    List<TestRunner.CaseResult>? results;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        // Both passes block the single WASM thread, so each one renders before the next starts.
+        probes = await EnvironmentProbe.RunAllAsync();
+        StateHasChanged();
+        await Task.Yield();
+
+        results = await TestRunner.RunAllAsync();
+        StateHasChanged();
+    }
+}
