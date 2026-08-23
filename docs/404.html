@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>پیدا نشد · نمک‌پاش</title>
+<script>
+  // GitHub Pages serves this file for any unknown path. Routes inside the web app are real
+  // routes, not files, so a refresh on /app/trip/3 lands here — hand it back to the app and let
+  // its router resolve it. Anything else is a genuine 404 for the site.
+  (function () {
+    var path = location.pathname;
+    if (path.indexOf("/app/") === 0) {
+      sessionStorage.setItem("namakpash-deep-link", path.slice(5) + location.search + location.hash);
+      location.replace("/app/");
+    }
+  })();
+</script>
+<style>
+  body { font-family: Vazirmatn, system-ui, sans-serif; background: #F1F6F5; color: #0E1E1B;
+         display: grid; place-content: center; min-height: 100dvh; gap: 12px; text-align: center; padding: 24px; }
+  @media (prefers-color-scheme: dark) { body { background: #0A0F0E; color: #E9F1EF; } }
+  a { color: #0D9488; }
+</style>
+</head>
+<body>
+  <h1>این صفحه پیدا نشد</h1>
+  <p><a href="/">بازگشت به صفحهٔ نمک‌پاش</a></p>
+</body>
+</html>

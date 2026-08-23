@@ -1,0 +1,144 @@
+@page "/selftest"
+@inject Store Store
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+@* Not linked from the app. It exists because the one thing that cannot be checked by looking at
+   the screen is whether a write actually reached OPFS and would survive a reload. *@
+
+<PageTitle>Self test</PageTitle>
+
+<header class="topbar"><h1>Self test</h1></header>
+
+<main class="page">
+    <div class="stack">
+        @foreach (var step in steps)
+        {
+            <div class="card">
+                <div class="row-between">
+                    <h2>@step.Name</h2>
+                    <span class="amount @(step.Ok ? "credit" : "debit")">@(step.Ok ? "PASS" : "FAIL")</span>
+                </div>
+                <p class="meta" dir="ltr" style="text-align:start">@step.Detail</p>
+            </div>
+        }
+        @if (running) { <p class="hint">در حال اجرا…</p> }
+    </div>
+</main>
+
+@code {
+    record Step(string Name, bool Ok, string Detail);
+
+    readonly List<Step> steps = [];
+    bool running = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await RunAsync();
+        running = false;
+        StateHasChanged();
+        await ReportAsync();
+    }
+
+    async Task RunAsync()
+    {
+        // Not a pass/fail of the app: whether an origin is granted persistence is the browser's
+        // policy call, and a desktop browser refuses it until the site has some engagement.
+        Add("Storage persisted", true,
+            $"navigator.storage.persist() → {Store.Persisted}; quota {Store.Quota / 1048576} MB, used {Store.Usage / 1048576} MB");
+
+        try
+        {
+            // A whole trip, written the way the UI writes one.
+            var trip = await Store.MutateAsync(db => db.CreateTripAsync(
+                $"سلف‌تست {DateTime.Now:HH:mm:ss}", ["علی", "سارا", "رضا"]));
+            var people = await Store.Db.GetParticipantsAsync(trip.Id);
+
+            var expense = new Expense
+            {
+                TripId = trip.Id,
+                Description = "شام",
+                Amount = 100_000m,
+                PaidById = people[0].Id,
+                DateUtc = DateTime.UtcNow,
+            };
+            var split = EqualSplitter.Split(100_000m, 3);
+            var shares = people.Select((p, i) => new ExpenseShare { ParticipantId = p.Id, Share = split[i] }).ToList();
+            await Store.MutateAsync(db => db.SaveExpenseAsync(expense, shares));
+
+            Add("Write a trip and an expense", true, $"trip {trip.Id}, shares {string.Join(" + ", split)} = {split.Sum()}");
+
+            // The real question: is that in OPFS, or only in the in-memory filesystem?
+            var module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/storage.js");
+            var bytes = await module.InvokeAsync<byte[]?>("load");
+            Add("Database is in OPFS", bytes is { Length: > 0 }, $"{(bytes?.Length ?? 0) / 1024} KB read back out of OPFS");
+
+            // Open those bytes as a separate database — this is what a reload does.
+            if (bytes is { Length: > 0 })
+            {
+                var copyPath = $"/verify-{Guid.NewGuid():N}.db3";
+                await File.WriteAllBytesAsync(copyPath, bytes);
+                var copy = new SplittDatabase(copyPath);
+                await copy.InitializeAsync();
+
+                var trips = await copy.GetTripsAsync();
+                var reloaded = trips.FirstOrDefault(t => t.Id == trip.Id);
+                var copiedExpenses = reloaded is null ? [] : await copy.GetExpensesAsync(reloaded.Id);
+                var copiedShares = reloaded is null ? [] : await copy.GetSharesForTripAsync(reloaded.Id);
+
+                Add("Survives a reload", reloaded is not null && copiedExpenses.Count == 1,
+                    reloaded is null
+                        ? "the trip was not in the reopened database"
+                        : $"«{reloaded.Name}» came back with {copiedExpenses.Count} expense and {copiedShares.Count} shares");
+
+                // Money must come back as decimal, not as a rounded double.
+                if (copiedExpenses.Count == 1)
+                {
+                    var amount = copiedExpenses[0].Amount;
+                    Add("Amount round-trips exactly", amount == 100_000m, $"{amount} (TEXT column, InvariantCulture)");
+                }
+
+                var participants = reloaded is null ? [] : await copy.GetParticipantsAsync(reloaded.Id);
+                var net = BalanceCalculator.ComputeNet(participants, copiedExpenses, copiedShares);
+                var payer = net.TryGetValue(participants.FirstOrDefault()?.Id ?? 0, out var value) ? value : 0m;
+                Add("Balances derive after reload", payer == 66_666m, $"payer net = {payer}, expected 66666");
+
+                // Leave nothing behind: this route must not add junk to the user's real data.
+                await Store.MutateAsync(db => db.DeleteTripAsync(trip.Id));
+                File.Delete(copyPath);
+                Add("Cleaned up", true, "the test trip was deleted");
+            }
+
+            await module.DisposeAsync();
+        }
+        catch (Exception ex)
+        {
+            Add("Unhandled", false, $"{ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// An automated run opens this route with ?report=1 and reads the result from its own server;
+    /// a headless screenshot cannot be trusted to catch the page after real disk I/O finishes.
+    /// </summary>
+    async Task ReportAsync()
+    {
+        if (!Nav.Uri.Contains("report=1")) return;
+
+        var payload = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            passed = steps.Count(s => s.Ok),
+            total = steps.Count,
+            steps = steps.Select(s => new { name = s.Name, ok = s.Ok, detail = s.Detail }),
+        });
+
+        await Store.PostJsonAsync("/selftest-report", payload);
+    }
+
+    void Add(string name, bool ok, string detail)
+    {
+        steps.Add(new Step(name, ok, detail));
+        StateHasChanged();
+    }
+}

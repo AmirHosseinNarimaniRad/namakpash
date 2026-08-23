@@ -1,0 +1,160 @@
+@page "/"
+@inject Store Store
+@inject NavigationManager Nav
+
+<PageTitle>نمک‌پاش</PageTitle>
+
+<header class="topbar">
+    <h1>نمک‌پاش</h1>
+    <button class="btn btn-ghost" @onclick="RestoreAsync">بازیابی</button>
+</header>
+
+<main class="page">
+    @if (loading)
+    {
+        <p class="hint">در حال خواندن…</p>
+    }
+    else if (cards.Count == 0)
+    {
+        <div class="empty">
+            <strong>هنوز رویدادی نساخته‌ای</strong>
+            <p>اولین رویداد را بساز — سفر، دورهمی، مهمانی یا رستوران. هزینه‌ها را راحت دنگ کن.</p>
+        </div>
+    }
+    else
+    {
+        <div class="stack">
+            @foreach (var card in cards)
+            {
+                <button class="card card-tap" @onclick="() => Open(card.Id)">
+                    <div class="row-between">
+                        <h2>@card.Name</h2>
+                        <span class="amount">@card.TotalText</span>
+                    </div>
+                    <p class="meta">@card.SubText</p>
+                </button>
+            }
+        </div>
+    }
+
+    @if (restoreError is not null)
+    {
+        <div class="notice" style="margin-top:var(--s4)">
+            <strong>فایل پشتیبان خوانده نشد.</strong> چیزی وارد نشد و داده‌های فعلی دست‌نخورده ماند.
+            جزئیات: @restoreError
+        </div>
+    }
+
+    @if (Store.LoadError is not null)
+    {
+        <div class="notice" style="margin-top:var(--s4)">
+            <strong>پایگاه داده خوانده نشد.</strong> برای اینکه چیزی از بین نرود، نمک‌پاش روی آن
+            چیزی ننوشت. اگر فایل پشتیبان داری، «بازیابی» را بزن. جزئیات: @Store.LoadError
+        </div>
+    }
+</main>
+
+<button class="fab" @onclick="() => sheetOpen = true">＋ رویداد جدید</button>
+
+@if (sheetOpen)
+{
+    <div class="scrim" @onclick="Close">
+        <div class="sheet" @onclick:stopPropagation="true">
+            <h2>رویداد جدید</h2>
+
+            <label class="field">
+                نام رویداد
+                <input type="text" @bind="newName" @bind:event="oninput" placeholder="سفر شمال" />
+            </label>
+
+            <label class="field">
+                اسم شرکت‌کننده‌ها
+                <textarea rows="4" @bind="newPeople" @bind:event="oninput"
+                          placeholder="هر نفر در یک خط&#10;علی&#10;سارا&#10;رضا"></textarea>
+            </label>
+            <p class="hint">هر اسم را در یک خط بنویس. بعداً هم می‌توانی تغییرشان بدهی.</p>
+
+            <button class="btn btn-primary btn-block" disabled="@(!CanCreate)" @onclick="CreateAsync">ساختن رویداد</button>
+            <button class="btn btn-ghost btn-block" @onclick="Close">بی‌خیال</button>
+        </div>
+    </div>
+}
+
+@code {
+    record Card(int Id, string Name, string SubText, string TotalText);
+
+    List<Card> cards = [];
+    bool loading = true;
+    bool sheetOpen;
+    string newName = "";
+    string newPeople = "";
+
+    bool CanCreate => newName.Trim().Length > 0 && People().Count > 0;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    async Task LoadAsync()
+    {
+        loading = true;
+        var built = new List<Card>();
+
+        foreach (var trip in await Store.Db.GetTripsAsync())
+        {
+            var people = await Store.Db.GetParticipantsAsync(trip.Id);
+            var expenses = await Store.Db.GetExpensesAsync(trip.Id);
+            var real = expenses.Where(e => !e.IsSettlement).ToList();
+
+            built.Add(new Card(
+                trip.Id,
+                trip.Name,
+                $"{people.Count} نفر · {real.Count} هزینه",
+                MoneyFormat.FormatToman(real.Sum(e => e.Amount))));
+        }
+
+        cards = built;
+        loading = false;
+    }
+
+    List<string> People() => newPeople
+        .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Distinct()
+        .ToList();
+
+    void Open(int id) => Nav.NavigateTo($"trip/{id}");
+
+    void Close()
+    {
+        sheetOpen = false;
+        newName = "";
+        newPeople = "";
+    }
+
+    async Task CreateAsync()
+    {
+        var name = newName.Trim();
+        var people = People();
+        var trip = await Store.MutateAsync(db => db.CreateTripAsync(name, people));
+        Close();
+        Nav.NavigateTo($"trip/{trip.Id}");
+    }
+
+    async Task RestoreAsync()
+    {
+        var json = await Store.PickTextFileAsync();
+        if (string.IsNullOrWhiteSpace(json)) return;
+
+        try
+        {
+            var dto = TripExporter.FromJson(json);
+            var trip = await Store.MutateAsync(db => db.ImportTripAsync(dto));
+            Nav.NavigateTo($"trip/{trip.Id}");
+        }
+        catch (Exception ex)
+        {
+            restoreError = ex.Message;
+            StateHasChanged();
+        }
+    }
+
+    string? restoreError;
+}

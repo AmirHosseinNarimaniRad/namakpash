@@ -1,0 +1,272 @@
+@page "/trip/{Id:int}"
+@inject Store Store
+@inject NavigationManager Nav
+
+<PageTitle>@(trip?.Name ?? "رویداد")</PageTitle>
+
+<header class="topbar">
+    <button class="btn btn-icon" @onclick='() => Nav.NavigateTo("")' aria-label="بازگشت">→</button>
+    <h1>
+        @(trip?.Name ?? "…")
+        <span class="sub">@totalText</span>
+    </h1>
+    <button class="btn btn-ghost" @onclick="ExportAsync">پشتیبان</button>
+</header>
+
+<main class="page">
+    <div class="tabs">
+        <button class="tab @(tab == Tab.Expenses ? "is-on" : "")" @onclick="() => tab = Tab.Expenses">هزینه‌ها</button>
+        <button class="tab @(tab == Tab.Balances ? "is-on" : "")" @onclick="() => tab = Tab.Balances">تراز و تسویه</button>
+        <button class="tab @(tab == Tab.Report ? "is-on" : "")" @onclick="() => tab = Tab.Report">گزارش</button>
+    </div>
+
+    @if (loading)
+    {
+        <p class="hint" style="margin-top:var(--s4)">در حال خواندن…</p>
+    }
+    else if (tab == Tab.Expenses)
+    {
+        @if (expenses.Count == 0)
+        {
+            <div class="empty">
+                <strong>هنوز هزینه‌ای ثبت نشده</strong>
+                <p>اولین هزینه را اضافه کن تا حساب‌وکتاب شروع شود.</p>
+            </div>
+        }
+        else
+        {
+            <div class="stack" style="margin-top:var(--s4)">
+                @foreach (var expense in expenses)
+                {
+                    <button class="card card-tap" @onclick="() => EditExpense(expense.Id)">
+                        <div class="row-between">
+                            <h2>@expense.Description</h2>
+                            <span class="amount">@MoneyFormat.FormatToman(expense.Amount)</span>
+                        </div>
+                        <p class="meta">@Bidi.Rtl($"{NameOf(expense.PaidById)} پرداخت کرد · {PersianDate.ToDisplay(expense.DateUtc)}")</p>
+                    </button>
+                }
+            </div>
+        }
+    }
+    else if (tab == Tab.Balances)
+    {
+        <div class="stack" style="margin-top:var(--s4)">
+            @foreach (var person in participants)
+            {
+                var value = net.TryGetValue(person.Id, out var n) ? n : 0m;
+                var isCreditor = value > 0;
+                var isZero = value == 0;
+                <div class="card">
+                    <div class="row-between">
+                        <h2>@person.Name</h2>
+                        <span class="amount @(isZero ? "" : isCreditor ? "credit" : "debit")">
+                            @MoneyFormat.FormatToman(Math.Abs(value))
+                        </span>
+                    </div>
+                    <p class="meta">@(isZero ? "تسویه" : isCreditor ? "طلبکار" : "بدهکار")</p>
+                    @if (!isZero)
+                    {
+                        <div class="bar" style="margin-top:var(--s2)">
+                            <span class="@(isCreditor ? "credit" : "debit")" style="width:@(Fraction(value))%"></span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <h2 style="margin-top:var(--s3)">پیشنهاد تسویه</h2>
+            @if (suggestions.Count == 0)
+            {
+                <p class="hint">همه تسویه‌اند — چیزی برای پرداخت نمانده.</p>
+            }
+            else
+            {
+                @foreach (var suggestion in suggestions)
+                {
+                    <div class="card">
+                        <div class="row-between">
+                            <span>@Bidi.Rtl($"{NameOf(suggestion.FromParticipantId)} به {NameOf(suggestion.ToParticipantId)}")</span>
+                            <span class="amount">@MoneyFormat.FormatToman(suggestion.Amount)</span>
+                        </div>
+                        <button class="btn btn-block" style="margin-top:var(--s3)"
+                                @onclick="() => AskSettle(suggestion)">ثبت تسویه</button>
+                    </div>
+                }
+            }
+        </div>
+    }
+    else
+    {
+        @if (report is null || report.People.Count == 0)
+        {
+            <div class="empty">
+                <strong>گزارشی نیست</strong>
+                <p>با ثبت اولین هزینه، گزارش رویداد ساخته می‌شود.</p>
+            </div>
+        }
+        else
+        {
+            <div class="stack" style="margin-top:var(--s4)">
+                <div class="card">
+                    <div class="row-between"><span>جمع هزینه‌ها</span><span class="amount">@MoneyFormat.FormatToman(report.Total)</span></div>
+                    <div class="row-between"><span class="meta">میانگین هر نفر</span><span class="meta">@MoneyFormat.FormatToman(report.AveragePerPerson)</span></div>
+                </div>
+
+                @foreach (var person in report.People)
+                {
+                    <div class="card">
+                        <div class="row-between">
+                            <h2>@person.Name</h2>
+                            <span class="amount @(person.Net == 0 ? "" : person.Net > 0 ? "credit" : "debit")">
+                                @MoneyFormat.FormatToman(Math.Abs(person.Net))
+                            </span>
+                        </div>
+                        <p class="meta">
+                            پرداخت @MoneyFormat.Format(person.Paid) · سهم @MoneyFormat.Format(person.Owed)
+                            @(person.Net == 0 ? " · تسویه" : person.Net > 0 ? " · طلبکار" : " · بدهکار")
+                        </p>
+                    </div>
+                }
+
+                <button class="btn btn-primary btn-block" @onclick="PrintReportAsync">گرفتن خروجی PDF</button>
+                <p class="hint">
+                    پنجرهٔ چاپ باز می‌شود؛ روی آیفون «Save to Files» و روی اندروید «ذخیره به‌صورت PDF» را بزن.
+                </p>
+            </div>
+        }
+    }
+
+    @if (message is not null)
+    {
+        <div class="notice" style="margin-top:var(--s4)">@message</div>
+    }
+</main>
+
+@if (tab == Tab.Expenses)
+{
+    <button class="fab" @onclick="NewExpense">＋ هزینهٔ جدید</button>
+}
+
+@if (pendingSettlement is not null)
+{
+    <div class="scrim" @onclick="() => pendingSettlement = null">
+        <div class="sheet" @onclick:stopPropagation="true">
+            <h2>ثبت تسویه</h2>
+            <p>@Bidi.Rtl($"{NameOf(pendingSettlement.FromParticipantId)} به {NameOf(pendingSettlement.ToParticipantId)} مبلغ {MoneyFormat.FormatToman(pendingSettlement.Amount)} پرداخت کرد؟")</p>
+            <button class="btn btn-primary btn-block" @onclick="ConfirmSettleAsync">ثبت</button>
+            <button class="btn btn-ghost btn-block" @onclick="() => pendingSettlement = null">انصراف</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    enum Tab { Expenses, Balances, Report }
+
+    Tab tab = Tab.Expenses;
+    Trip? trip;
+    List<Participant> participants = [];
+    List<Expense> expenses = [];
+    List<ExpenseShare> shares = [];
+    Dictionary<int, decimal> net = [];
+    List<SettlementSuggestion> suggestions = [];
+    TripReport? report;
+    SettlementSuggestion? pendingSettlement;
+    string totalText = "";
+    string? message;
+    bool loading = true;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    async Task LoadAsync()
+    {
+        loading = true;
+        trip = await Store.Db.GetTripAsync(Id);
+        if (trip is null)
+        {
+            Nav.NavigateTo("");
+            return;
+        }
+
+        participants = await Store.Db.GetParticipantsAsync(Id);
+        var all = await Store.Db.GetExpensesAsync(Id);
+        shares = await Store.Db.GetSharesForTripAsync(Id);
+
+        // The expenses tab lists what people spent; settlements are payments between people and
+        // belong in the balances story, not the spending one.
+        expenses = all.Where(e => !e.IsSettlement).OrderByDescending(e => e.DateUtc).ThenByDescending(e => e.Id).ToList();
+        totalText = MoneyFormat.FormatToman(all.Where(e => !e.IsSettlement).Sum(e => e.Amount));
+
+        net = BalanceCalculator.ComputeNet(participants, all, shares);
+        suggestions = SettlementPlanner.Plan(net);
+        report = ReportBuilder.Build(participants, all, shares);
+
+        loading = false;
+    }
+
+    string NameOf(int participantId) =>
+        participants.FirstOrDefault(p => p.Id == participantId)?.Name ?? "—";
+
+    int Fraction(decimal value)
+    {
+        var largest = net.Values.Select(Math.Abs).DefaultIfEmpty(0m).Max();
+        if (largest == 0) return 0;
+        return (int)Math.Round(Math.Abs(value) / largest * 100);
+    }
+
+    void NewExpense() => Nav.NavigateTo($"trip/{Id}/expense");
+
+    void EditExpense(int expenseId) => Nav.NavigateTo($"trip/{Id}/expense/{expenseId}");
+
+    void AskSettle(SettlementSuggestion suggestion) => pendingSettlement = suggestion;
+
+    async Task ConfirmSettleAsync()
+    {
+        var suggestion = pendingSettlement!;
+        pendingSettlement = null;
+
+        // A settlement is just an expense: the debtor pays, the creditor holds the whole share.
+        // That is why nothing in the balance code needs a special case for it.
+        var expense = new Expense
+        {
+            TripId = Id,
+            Description = "تسویه",
+            Amount = suggestion.Amount,
+            PaidById = suggestion.FromParticipantId,
+            DateUtc = DateTime.UtcNow,
+            IsSettlement = true,
+        };
+        var share = new ExpenseShare { ParticipantId = suggestion.ToParticipantId, Share = suggestion.Amount };
+
+        await Store.MutateAsync(db => db.SaveExpenseAsync(expense, [share]));
+        await LoadAsync();
+    }
+
+    async Task ExportAsync()
+    {
+        if (trip is null) return;
+        var all = await Store.Db.GetExpensesAsync(Id);
+        var json = TripExporter.ToJson(trip, participants, all, shares);
+        await Store.DownloadTextAsync($"{SafeName(trip.Name)}.json", json);
+        message = "فایل پشتیبان ساخته شد. جایی نگهش دار که بعداً پیدایش کنی.";
+    }
+
+    async Task PrintReportAsync()
+    {
+        if (trip is null) return;
+        var all = await Store.Db.GetExpensesAsync(Id);
+
+        // The same formatter the Android app prints from, so the two PDFs are the same document.
+        var (html, _) = ReportHtmlFormatter.Format(
+            trip.Name, participants, all, shares, DateTime.Now, "fonts/");
+
+        await Store.PrintHtmlAsync(html);
+    }
+
+    static string SafeName(string name)
+    {
+        var cleaned = new string(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '-' : c).ToArray());
+        return string.IsNullOrWhiteSpace(cleaned) ? "namakpash" : cleaned.Trim();
+    }
+}

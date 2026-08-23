@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+
+    <!-- sqlite-net's browser-wasm e_sqlite3 is only linked when the wasm-tools workload relinks
+         natively. Without this the app throws DllNotFoundException on the first query — the
+         build only warns. See Splitt.Wasm.Spike/README.md. -->
+    <WasmBuildNative>true</WasmBuildNative>
+
+    <!-- The app is served from https://namakpash.namakco.ir/app/, a subfolder, so every asset
+         path has to resolve relative to it. -->
+    <StaticWebAssetBasePath>app</StaticWebAssetBasePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Splitt.Core\Splitt.Core.csproj" />
+  </ItemGroup>
+
+</Project>

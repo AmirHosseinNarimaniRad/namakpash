@@ -1,0 +1,54 @@
+@inject Store Store
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+@if (ready)
+{
+    <Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+    </Router>
+}
+else
+{
+    <div class="boot">
+        <div class="boot-mark"></div>
+        <p class="boot-text">@status</p>
+    </div>
+}
+
+@code {
+    bool ready;
+    string status = "در حال آماده‌سازی…";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            // Reads the database out of OPFS and asks the browser not to evict this origin.
+            await Store.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            status = $"باز کردن اطلاعات ممکن نشد: {ex.Message}";
+            StateHasChanged();
+            return;
+        }
+
+        ready = true;
+        StateHasChanged();
+
+        // A refresh on a route like /app/trip/3 is served by the site's 404 page, which stores
+        // where the user actually was and sends them here. Put them back.
+        var deepLink = await JS.InvokeAsync<string?>("sessionStorage.getItem", "namakpash-deep-link");
+        if (!string.IsNullOrEmpty(deepLink))
+        {
+            await JS.InvokeVoidAsync("sessionStorage.removeItem", "namakpash-deep-link");
+            Nav.NavigateTo(deepLink.TrimStart('/'));
+        }
+    }
+}
