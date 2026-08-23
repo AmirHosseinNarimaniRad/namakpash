@@ -104,6 +104,7 @@ treat that as a listing violation, and it is not worth the risk for the traffic 
 | تصاویر | `store/screenshots/01-trips.png` … `07-dark-balances.png` (1080×2424) |
 | فایل نصبی | `dist/namakpash-v1.3.1.apk` (versionCode 5) |
 | حریم خصوصی | <https://namakpash.namakco.ir/privacy.html> |
+| وب‌سایت | <https://namakpash.namakco.ir> — filled in on the listing 2026-08-23 |
 
 Upload the screenshots in numbered order: the list, expenses, balances and report first, the
 editor and the two dark-mode shots after. `08-report-full.png` is the whole PDF report and is

@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Storage Durability Probe</title>
+<meta name="description" content="Does browser storage survive on this device? A marker is written once and checked on every later visit.">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Storage Probe">
+<meta name="theme-color" content="#0D9488">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EFF4F3; --surface:#FFFFFF; --surface-2:#E6EEEC;
+  --ink:#0C1B18; --muted:#5A6D68; --line:#D6E3E0;
+  --accent:#0D9488; --accent-soft:#D3F1EC;
+  --ok:#0A7D4F; --ok-soft:#D6F0E3;
+  --warn:#9A5B08; --warn-soft:#FBEBD2;
+  --bad:#A5231C; --bad-soft:#F8DEDC;
+  --shadow:0 1px 2px rgba(9,44,38,.06), 0 10px 30px rgba(9,44,38,.07);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#080D0C; --surface:#121917; --surface-2:#1A2422;
+    --ink:#E6EFEC; --muted:#8FA29D; --line:#22302D;
+    --accent:#2DD4BF; --accent-soft:#0F3B36;
+    --ok:#5BD99B; --ok-soft:#0E3626;
+    --warn:#F0B457; --warn-soft:#3A2A0C;
+    --bad:#F58A82; --bad-soft:#3D1512;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#080D0C; --surface:#121917; --surface-2:#1A2422;
+  --ink:#E6EFEC; --muted:#8FA29D; --line:#22302D;
+  --accent:#2DD4BF; --accent-soft:#0F3B36;
+  --ok:#5BD99B; --ok-soft:#0E3626;
+  --warn:#F0B457; --warn-soft:#3A2A0C;
+  --bad:#F58A82; --bad-soft:#3D1512;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:16px; line-height:1.6;
+  padding:max(20px, env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom));
+}
+.wrap{max-width:660px;margin-inline:auto;display:flex;flex-direction:column;gap:26px}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+
+/* ---------- masthead ---------- */
+.mast{display:flex;flex-direction:column;gap:8px}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--accent);
+}
+h1{font-size:26px;font-weight:600;line-height:1.25;text-wrap:balance;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:15px;max-width:58ch}
+
+/* ---------- the clock: the headline reading ---------- */
+.clock{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--shadow); padding:20px; display:flex; flex-direction:column; gap:14px;
+}
+.age{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.age .num{font-family:"IBM Plex Mono",monospace;font-size:40px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.age .unit{font-size:15px;color:var(--muted)}
+.age.gone .num{color:var(--bad)}
+.clock .note{font-size:14px;color:var(--muted)}
+.ctx{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ---------- chips ---------- */
+.chip{
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:500;
+  letter-spacing:.06em; text-transform:uppercase;
+  padding:4px 9px; border-radius:999px; border:1px solid transparent; white-space:nowrap;
+}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.flat{background:var(--surface-2);color:var(--muted);border-color:var(--line)}
+
+/* ---------- readout rows ---------- */
+section{display:flex;flex-direction:column;gap:12px}
+h2{font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.rows{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.row{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:14px 16px;border-bottom:1px solid var(--line);align-items:start}
+.row:last-child{border-bottom:0}
+.row .name{font-weight:500;font-size:15px}
+.row .val{grid-column:1 / -1;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);word-break:break-word;line-height:1.65}
+.row .val.danger{color:var(--bad)}
+
+/* ---------- actions ---------- */
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+button{
+  font:inherit; font-size:14.5px; font-weight:500; cursor:pointer;
+  padding:11px 16px; border-radius:11px; border:1px solid var(--line);
+  background:var(--surface); color:var(--ink); box-shadow:var(--shadow);
+  -webkit-tap-highlight-color:transparent;
+}
+button.primary{background:var(--accent);border-color:transparent;color:var(--ground)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+.hint{font-size:13.5px;color:var(--muted)}
+
+/* ---------- instructions ---------- */
+.steps{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.steps h3{font-size:14.5px;font-weight:600}
+.steps ol{margin-inline-start:18px;display:flex;flex-direction:column;gap:6px;font-size:14.5px;color:var(--muted)}
+.steps strong{color:var(--ink);font-weight:600}
+
+footer{font-size:12.5px;color:var(--muted);text-align:center;font-family:"IBM Plex Mono",monospace}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <span class="eyebrow">NamakPash · field test</span>
+    <h1>Does browser storage survive on this device?</h1>
+    <p class="sub">
+      A marker is written into four storage backends on the first visit. Every later visit checks
+      whether it is still there. If Safari evicts the data, this page is where it shows up.
+    </p>
+  </header>
+
+  <div class="clock">
+    <div class="age" id="age"><span class="num" id="ageNum">…</span><span class="unit" id="ageUnit">reading storage</span></div>
+    <p class="note" id="ageNote">Checking what is on this device.</p>
+    <div class="ctx" id="ctx"></div>
+  </div>
+
+  <section>
+    <h2>The marker</h2>
+    <div class="rows" id="markers"></div>
+    <p class="hint">
+      Four backends, because they are not evicted as one: a browser may drop some and keep others.
+      OPFS is the one a SQLite database would live in.
+    </p>
+  </section>
+
+  <section>
+    <h2>Storage policy</h2>
+    <div class="rows" id="policy"></div>
+    <div class="actions">
+      <button class="primary" id="persistBtn">Request persistent storage</button>
+      <button id="copyBtn">Copy report</button>
+      <button id="resetBtn">Write a fresh marker</button>
+    </div>
+    <p class="hint" id="actionHint">
+      Requesting persistence is the API that asks the browser not to evict this origin. What it
+      answers on iOS is one of the things being measured.
+    </p>
+  </section>
+
+  <div class="steps">
+    <h3>How to run the test</h3>
+    <ol>
+      <li>Open this page once in <strong>Safari</strong> and leave it — that writes the marker.</li>
+      <li>Add it to the <strong>Home Screen</strong> from the share sheet, open it from there once,
+          and leave that too. Home-screen web apps are exempt from the seven-day rule; a plain tab is not.</li>
+      <li>Do not open either for <strong>at least eight days</strong>, then open both and read the number at the top.</li>
+    </ol>
+    <p class="hint">The tab and the home-screen app share one origin, so they share the marker — the difference being measured is how the browser treats each.</p>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "namakpash-storage-probe";
+  var DB_NAME = "namakpash-probe", STORE = "markers", FILE = "marker.json", CACHE = "namakpash-probe";
+
+  // Every backend answers the same three questions: is it usable, is the marker there, when was
+  // it written. Anything can throw on any device, so nothing here is assumed to work.
+  var backends = [
+    {
+      id: "localStorage", label: "localStorage",
+      read: async function () { return JSON.parse(localStorage.getItem(KEY)); },
+      write: async function (m) { localStorage.setItem(KEY, JSON.stringify(m)); }
+    },
+    {
+      id: "indexedDB", label: "IndexedDB",
+      read: async function () { return await idb("readonly", function (s) { return s.get("marker"); }); },
+      write: async function (m) { await idb("readwrite", function (s) { return s.put(m, "marker"); }); }
+    },
+    {
+      id: "opfs", label: "OPFS (origin private file system)",
+      read: async function () {
+        var dir = await navigator.storage.getDirectory();
+        var handle = await dir.getFileHandle(FILE);
+        return JSON.parse(await (await handle.getFile()).text());
+      },
+      write: async function (m) {
+        var dir = await navigator.storage.getDirectory();
+        var handle = await dir.getFileHandle(FILE, { create: true });
+        var w = await handle.createWritable();
+        await w.write(JSON.stringify(m));
+        await w.close();
+      }
+    },
+    {
+      id: "cache", label: "Cache Storage",
+      read: async function () {
+        var c = await caches.open(CACHE);
+        var res = await c.match("/marker");
+        return res ? await res.json() : null;
+      },
+      write: async function (m) {
+        var c = await caches.open(CACHE);
+        await c.put("/marker", new Response(JSON.stringify(m), { headers: { "Content-Type": "application/json" } }));
+      }
+    }
+  ];
+
+  // A storage API that never settles would hang the whole report — and OPFS in particular can
+  // block on a lock left behind by a previous session. Every call is raced against a deadline so
+  // one stuck backend costs its own row, not the page.
+  function withTimeout(promise, ms, label) {
+    return Promise.race([
+      promise,
+      new Promise(function (_, reject) {
+        setTimeout(function () { reject(new Error("timed out after " + ms + "ms: " + label)); }, ms);
+      })
+    ]);
+  }
+
+  function idb(mode, run) {
+    return new Promise(function (resolve, reject) {
+      var open = indexedDB.open(DB_NAME, 1);
+      open.onupgradeneeded = function () { open.result.createObjectStore(STORE); };
+      open.onerror = function () { reject(open.error); };
+      open.onsuccess = function () {
+        var tx = open.result.transaction(STORE, mode);
+        var req = run(tx.objectStore(STORE));
+        req.onsuccess = function () { resolve(req.result); };
+        req.onerror = function () { reject(req.error); };
+      };
+    });
+  }
+
+  var state = { marker: null, results: [], policy: {}, context: {} };
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function row(name, chip, chipClass, detail, danger) {
+    var r = el("div", "row");
+    r.appendChild(el("span", "name", name));
+    r.appendChild(el("span", "chip " + chipClass, chip));
+    if (detail) r.appendChild(el("span", danger ? "val danger" : "val", detail));
+    return r;
+  }
+
+  function days(from, to) { return (to - from) / 86400000; }
+
+  function ago(ms) {
+    var d = ms / 86400000;
+    if (d >= 1) return { num: Math.floor(d), unit: Math.floor(d) === 1 ? "day ago" : "days ago" };
+    var h = ms / 3600000;
+    if (h >= 1) return { num: Math.floor(h), unit: Math.floor(h) === 1 ? "hour ago" : "hours ago" };
+    return { num: Math.max(1, Math.floor(ms / 60000)), unit: "minutes ago" };
+  }
+
+  // Read every backend at once: they are independent, and one of them blocking must not delay
+  // the others' answers.
+  function readAll() {
+    return Promise.all(backends.map(async function (b) {
+      var started = Date.now();
+      try {
+        var value = await withTimeout(b.read(), 8000, b.id);
+        return { id: b.id, label: b.label, marker: value || null, error: null, ms: Date.now() - started };
+      } catch (err) {
+        // A missing file is a normal "not there"; anything else is the backend refusing to work.
+        var missing = err && (err.name === "NotFoundError" || err.name === "TypeError");
+        return {
+          id: b.id, label: b.label, marker: null, ms: Date.now() - started,
+          error: missing ? null : (err ? (err.name || "Error") + ": " + err.message : String(err))
+        };
+      }
+    }));
+  }
+
+  function writeAll(marker) {
+    return Promise.all(backends.map(function (b) {
+      return withTimeout(b.write(marker), 8000, b.id).catch(function () { /* reported next read */ });
+    }));
+  }
+
+  async function readPolicy() {
+    var policy = {};
+    try {
+      policy.persisted = navigator.storage && navigator.storage.persisted
+        ? await withTimeout(navigator.storage.persisted(), 3000, "persisted") : null;
+    } catch (e) { policy.persisted = null; }
+    try {
+      var est = navigator.storage && navigator.storage.estimate
+        ? await withTimeout(navigator.storage.estimate(), 3000, "estimate") : null;
+      if (est) {
+        policy.quota = est.quota;
+        policy.usage = est.usage;
+      }
+    } catch (e) { /* Safari has been known to refuse estimate() in private mode */ }
+    policy.secureContext = window.isSecureContext;
+    policy.opfsAvailable = !!(navigator.storage && navigator.storage.getDirectory);
+    policy.persistApi = !!(navigator.storage && navigator.storage.persist);
+    return policy;
+  }
+
+  var VISITS = "namakpash-storage-probe-visits";
+
+  function logVisit() {
+    try {
+      var log = JSON.parse(localStorage.getItem(VISITS) || "[]");
+      log.push(new Date().toISOString());
+      localStorage.setItem(VISITS, JSON.stringify(log.slice(-20)));
+      return log;
+    } catch (e) { return []; }
+  }
+
+  function readVisits() {
+    try { return JSON.parse(localStorage.getItem(VISITS) || "[]"); } catch (e) { return []; }
+  }
+
+  function readContext() {
+    var standalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)
+      || window.navigator.standalone === true;
+    return {
+      standalone: standalone,
+      ua: navigator.userAgent,
+      origin: location.origin,
+      checkedAt: new Date().toISOString()
+    };
+  }
+
+  function mb(bytes) {
+    if (bytes === undefined || bytes === null) return "unknown";
+    return (bytes / 1048576).toFixed(1) + " MB";
+  }
+
+  function render() {
+    // ---- headline: how old is the oldest surviving marker ----
+    var survivors = state.results.filter(function (r) { return r.marker && r.marker.writtenAt; });
+    var ageEl = document.getElementById("age");
+    var num = document.getElementById("ageNum");
+    var unit = document.getElementById("ageUnit");
+    var note = document.getElementById("ageNote");
+
+    if (state.results.length === 0) {
+      // A failed pass must not be reported as an eviction — those look identical here otherwise.
+      num.textContent = "—";
+      unit.textContent = "no reading";
+    } else if (state.firstRun) {
+      num.textContent = "0";
+      unit.textContent = "days — marker written just now";
+      note.textContent = "Come back in eight days or more. Until then there is nothing to see here.";
+    } else if (survivors.length === 0) {
+      ageEl.classList.add("gone");
+      num.textContent = "gone";
+      unit.textContent = "every backend was cleared";
+      note.textContent = "No marker in any of the four. Either the browser evicted this origin, or site data was cleared by hand.";
+    } else {
+      var oldest = survivors.reduce(function (a, b) {
+        return new Date(a.marker.writtenAt) < new Date(b.marker.writtenAt) ? a : b;
+      });
+      var written = new Date(oldest.marker.writtenAt);
+      var a = ago(Date.now() - written.getTime());
+      num.textContent = a.num;
+      unit.textContent = a.unit + " — and still here";
+      var lost = state.results.length - survivors.length;
+      note.textContent = "Written " + written.toLocaleString() + ". " +
+        (lost === 0 ? "All four backends survived." : lost + " of " + state.results.length + " backends lost it.");
+      if (days(written, Date.now()) >= 8 && lost === 0) {
+        note.textContent += " Past eight days with everything intact — the seven-day rule did not apply here.";
+      }
+    }
+
+    // ---- context chips ----
+    var ctx = document.getElementById("ctx");
+    ctx.textContent = "";
+    ctx.appendChild(el("span", "chip " + (state.context.standalone ? "ok" : "flat"),
+      state.context.standalone ? "home screen app" : "browser tab"));
+    ctx.appendChild(el("span", "chip " + (state.policy.secureContext ? "flat" : "bad"),
+      state.policy.secureContext ? "secure context" : "insecure context"));
+    if (state.policy.persisted === true) ctx.appendChild(el("span", "chip ok", "persisted"));
+    else if (state.policy.persisted === false) ctx.appendChild(el("span", "chip warn", "not persisted"));
+
+    // ---- marker rows ----
+    var markers = document.getElementById("markers");
+    markers.textContent = "";
+    state.results.forEach(function (r) {
+      var chip, cls, detail;
+      if (r.error) { chip = "error"; cls = "bad"; detail = r.error; }
+      else if (r.marker) {
+        chip = "present"; cls = "ok";
+        detail = "id " + r.marker.id + " · written " + new Date(r.marker.writtenAt).toLocaleString()
+          + " · read in " + r.ms + "ms";
+      } else {
+        chip = state.firstRun ? "written" : "missing";
+        cls = state.firstRun ? "flat" : "bad";
+        detail = state.firstRun ? "marker just written" : "nothing stored under this key";
+      }
+      markers.appendChild(row(r.label, chip, cls, detail, !!r.error || (!r.marker && !state.firstRun)));
+    });
+
+    // ---- policy rows ----
+    var policy = document.getElementById("policy");
+    policy.textContent = "";
+    policy.appendChild(row("Persistent storage granted",
+      state.policy.persisted === null ? "unsupported" : (state.policy.persisted ? "yes" : "no"),
+      state.policy.persisted === null ? "flat" : (state.policy.persisted ? "ok" : "warn"),
+      state.policy.persistApi ? "navigator.storage.persist() exists on this browser"
+                              : "navigator.storage.persist() is not implemented here"));
+    policy.appendChild(row("Quota", mb(state.policy.quota), "flat",
+      "used " + mb(state.policy.usage) + " of " + mb(state.policy.quota)));
+    policy.appendChild(row("OPFS", state.policy.opfsAvailable ? "available" : "missing",
+      state.policy.opfsAvailable ? "ok" : "bad",
+      "navigator.storage.getDirectory()"));
+    var visits = readVisits();
+    var gap = visits.length > 1
+      ? " · longest gap " + Math.round(visits.reduce(function (max, v, i) {
+          return i === 0 ? 0 : Math.max(max, days(new Date(visits[i - 1]), new Date(v)));
+        }, 0) * 10) / 10 + " days"
+      : "";
+    policy.appendChild(row("Visits recorded", String(visits.length), visits.length > 1 ? "flat" : "warn",
+      (visits.length ? "first " + new Date(visits[0]).toLocaleString() : "none yet") + gap));
+
+    policy.appendChild(row("Launched from", state.context.standalone ? "home screen" : "browser",
+      state.context.standalone ? "ok" : "flat", state.context.ua));
+
+    document.getElementById("foot").textContent =
+      state.context.origin + " · checked " + new Date().toLocaleString();
+  }
+
+  async function refresh(forceWrite) {
+    try {
+      await collect(forceWrite);
+    } catch (err) {
+      // Never leave the page sitting on "reading storage" — a failed pass is itself a reading.
+      document.getElementById("ageNote").textContent =
+        "The probe could not finish: " + (err && err.message ? err.message : String(err));
+    }
+    render();
+  }
+
+  async function collect(forceWrite) {
+    state.results = await readAll();
+    state.policy = await readPolicy();
+    state.context = readContext();
+    logVisit();
+
+    var found = state.results.some(function (r) { return r.marker; });
+    if (!found || forceWrite) {
+      var marker = {
+        id: Math.random().toString(36).slice(2, 8),
+        writtenAt: new Date().toISOString(),
+        firstUa: navigator.userAgent
+      };
+      await writeAll(marker);
+      state.firstRun = true;
+      state.results = await readAll();
+    } else {
+      state.firstRun = false;
+      // Re-seed only the backends that lost it, so a partial eviction is repaired but the
+      // original writtenAt is preserved on the ones that survived.
+      var survivor = state.results.filter(function (r) { return r.marker; })[0].marker;
+      for (var i = 0; i < backends.length; i++) {
+        var result = state.results[i];
+        if (!result.marker && !result.error) {
+          try { await withTimeout(backends[i].write(survivor), 8000, backends[i].id); }
+          catch (e) { /* reported next read */ }
+        }
+      }
+    }
+  }
+
+  document.getElementById("persistBtn").addEventListener("click", async function () {
+    var btn = this;
+    btn.disabled = true;
+    var hint = document.getElementById("actionHint");
+    try {
+      if (!navigator.storage || !navigator.storage.persist) {
+        hint.textContent = "This browser has no navigator.storage.persist() at all.";
+      } else {
+        var granted = await navigator.storage.persist();
+        hint.textContent = granted
+          ? "Granted. The browser says it will not evict this origin under pressure."
+          : "Refused. The browser will not exempt this origin — this is the answer that matters on iOS.";
+      }
+    } catch (err) {
+      hint.textContent = "persist() threw: " + err.name + ": " + err.message;
+    }
+    btn.disabled = false;
+    await refresh(false);
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", async function () {
+    var report = JSON.stringify({
+      checkedAt: new Date().toISOString(),
+      context: state.context,
+      policy: state.policy,
+      markers: state.results.map(function (r) {
+        return { backend: r.id, present: !!r.marker, writtenAt: r.marker ? r.marker.writtenAt : null, error: r.error };
+      })
+    }, null, 2);
+    try {
+      await navigator.clipboard.writeText(report);
+      this.textContent = "Copied";
+      setTimeout(function () { document.getElementById("copyBtn").textContent = "Copy report"; }, 1600);
+    } catch (err) {
+      // Clipboard is blocked in some in-app browsers; show the text so it can be selected instead.
+      var pre = el("pre", "mono", report);
+      pre.style.cssText = "white-space:pre-wrap;font-size:12px;background:var(--surface-2);padding:12px;border-radius:10px;border:1px solid var(--line);overflow-x:auto";
+      this.parentElement.insertAdjacentElement("afterend", pre);
+    }
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", async function () {
+    await refresh(true);
+    document.getElementById("actionHint").textContent =
+      "A fresh marker was written to all four backends. The clock starts again from now.";
+  });
+
+  refresh(false);
+})();
+</script>
+</body>
+</html>
