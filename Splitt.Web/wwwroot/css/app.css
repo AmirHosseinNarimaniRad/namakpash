@@ -75,6 +75,13 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 .appbar h1 { font-size: 18px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .appbar .action { border: 0; background: none; cursor: pointer; font-size: 14px; color: var(--text); padding: 6px 2px; }
+/* Blazor's FocusOnNavigate gives the page's <h1> tabindex="-1" and focuses it after every
+   navigation, so a screen reader announces where it landed. Worth keeping — but WebKit treats
+   that programmatic focus as :focus-visible and paints the accent ring from the rule above,
+   which on iOS draws a teal box the width of the title bar around every page heading. Chrome
+   does not match, which is why it only shows on a phone or iPad. Scoped to tabindex="-1" so
+   nothing the user can actually reach with the keyboard loses its ring. */
+.appbar h1[tabindex="-1"]:focus, .appbar h1[tabindex="-1"]:focus-visible { outline: none; }
 .page { flex: 1; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
 .page.has-fab { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 
