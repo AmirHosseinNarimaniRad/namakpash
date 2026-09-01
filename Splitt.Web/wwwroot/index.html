@@ -15,8 +15,11 @@
 
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="css/app.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png" />
+    <!-- iOS reads this, not the manifest, when a page is added to the home screen, and it
+         composites any transparency onto black - so this one is a full-bleed opaque square
+         and iOS applies its own rounding. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
     <script type="importmap"></script>
 </head>
