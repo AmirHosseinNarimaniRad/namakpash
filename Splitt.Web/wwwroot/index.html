@@ -39,6 +39,11 @@
     </div>
 
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script>
+        // Registered after boot so the precache never competes with the first paint. In
+        // development this resolves to the no-op worker; publish swaps in the real one.
+        navigator.serviceWorker?.register('service-worker.js');
+    </script>
 </body>
 
 </html>

@@ -14,6 +14,11 @@
     <!-- The app is served from https://namakpash.namakco.ir/app/, a subfolder, so every asset
          path has to resolve relative to it. -->
     <StaticWebAssetBasePath>app</StaticWebAssetBasePath>
+
+    <!-- Generates service-worker-assets.js (every published asset, with integrity hashes) and
+         swaps service-worker.published.js in for service-worker.js. Without this the app cannot
+         start with no network, which is the whole promise. -->
+    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +28,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Splitt.Core\Splitt.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The property above is not enough on its own: this item is what makes publish replace the
+         development no-op worker with the offline one and emit the assets manifest. -->
+    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
 </Project>
