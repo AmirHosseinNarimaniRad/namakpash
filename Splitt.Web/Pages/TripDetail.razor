@@ -16,9 +16,9 @@
 
 <main class="page @(ShowsFab ? "has-fab" : "")">
     <div class="segmented">
-        <button class="@(tab == Tab.Expenses ? "on" : "")" @onclick="() => tab = Tab.Expenses">هزینه‌ها</button>
-        <button class="@(tab == Tab.Balances ? "on" : "")" @onclick="() => tab = Tab.Balances">تراز و تسویه</button>
-        <button class="@(tab == Tab.Report ? "on" : "")" @onclick="() => tab = Tab.Report">گزارش</button>
+        <button class="@(tab == Tab.Expenses ? "on" : "")" @onclick="() => SetTab(Tab.Expenses)">هزینه‌ها</button>
+        <button class="@(tab == Tab.Balances ? "on" : "")" @onclick="() => SetTab(Tab.Balances)">تراز و تسویه</button>
+        <button class="@(tab == Tab.Report ? "on" : "")" @onclick="() => SetTab(Tab.Report)">گزارش</button>
     </div>
 
     @if (loading)
@@ -43,7 +43,7 @@
                 {
                     var expense = row;
                     <button class="card tight @(expense.IsSettlement ? "settlement" : "")"
-                            @onclick="() => OpenExpense(expense.Id)">
+                            @onclick="() => OpenExpense(expense)">
                         <div class="row" style="align-items:flex-start">
                             <div style="min-width:0">
                                 <p style="font-weight:500">
@@ -184,7 +184,7 @@
 
     @if (message is not null)
     {
-        <div class="notice">@message</div>
+        <div class="notice" role="status" @onclick="() => message = null">@message</div>
     }
 </main>
 
@@ -206,6 +206,20 @@ else if (tab == Tab.Report && expenses.Count > 0)
             <div class="two">
                 <button class="btn" @onclick="ConfirmSettleAsync">ثبت</button>
                 <button class="btn btn-secondary" @onclick="() => pending = null">انصراف</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (pendingDelete is not null)
+{
+    <div class="scrim" @onclick="() => pendingDelete = null">
+        <div class="dialog" @onclick:stopPropagation="true">
+            <h2>تسویه</h2>
+            <p class="caption" style="text-align:center">این تراکنش تسویه حذف شود؟</p>
+            <div class="two">
+                <button class="btn" style="background:var(--debtor)" @onclick="ConfirmDeleteSettlementAsync">حذف</button>
+                <button class="btn btn-secondary" @onclick="() => pendingDelete = null">انصراف</button>
             </div>
         </div>
     </div>
@@ -250,6 +264,7 @@ else if (tab == Tab.Report && expenses.Count > 0)
     List<PersonRow> reportRows = [];
     TripReport? report;
     SettlementRow? pending;
+    ExpenseRow? pendingDelete;
 
     bool ShowsFab => tab == Tab.Expenses || (tab == Tab.Report && expenses.Count > 0);
 
@@ -335,8 +350,7 @@ else if (tab == Tab.Report && expenses.Count > 0)
                 s.Amount))
             .ToList();
 
-        var realExpenses = all.Where(e => !e.IsSettlement).ToList();
-        isSettled = suggestions.Count == 0 && realExpenses.Count > 0;
+        isSettled = suggestions.Count == 0 && expenses.Count > 0;
 
         // ---- report ----
         report = ReportBuilder.Build(participants, all, shares);
@@ -379,7 +393,35 @@ else if (tab == Tab.Report && expenses.Count > 0)
 
     void EditTrip() => Nav.NavigateTo($"trip-editor/{Id}");
     void NewExpense() => Nav.NavigateTo($"trip/{Id}/expense");
-    void OpenExpense(int expenseId) => Nav.NavigateTo($"trip/{Id}/expense/{expenseId}");
+
+    void SetTab(Tab next)
+    {
+        tab = next;
+        message = null;
+    }
+
+    void OpenExpense(ExpenseRow row)
+    {
+        // A settlement is not editable. On Android this tap asks to delete it, so users arrive
+        // here trained into it; opening the editor instead lets a save rewrite the settlement
+        // into an ordinary expense, and every "real expense" total goes with it (invariant #7).
+        if (row.IsSettlement)
+        {
+            pendingDelete = row;
+            return;
+        }
+
+        Nav.NavigateTo($"trip/{Id}/expense/{row.Id}");
+    }
+
+    async Task ConfirmDeleteSettlementAsync()
+    {
+        var row = pendingDelete!;
+        pendingDelete = null;
+
+        await Store.MutateAsync(db => db.DeleteExpenseAsync(row.Id));
+        await LoadAsync();
+    }
 
     async Task ConfirmSettleAsync()
     {

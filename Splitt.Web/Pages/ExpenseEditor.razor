@@ -114,7 +114,7 @@
     <div class="scrim" @onclick="() => confirmDelete = false">
         <div class="dialog" @onclick:stopPropagation="true">
             <h2>حذف هزینه</h2>
-            <p class="caption" style="text-align:center">این هزینه پاک شود؟ برگرداندنش ممکن نیست.</p>
+            <p class="caption" style="text-align:center">این هزینه برای همیشه حذف شود؟</p>
             <div class="two">
                 <button class="btn" style="background:var(--debtor)" @onclick="DeleteAsync">حذف</button>
                 <button class="btn btn-secondary" @onclick="() => confirmDelete = false">انصراف</button>
@@ -144,6 +144,7 @@
     bool datePickerOpen;
 
     DateTime dateLocal = DateTime.Now;
+    Expense? loaded;
 
     // Initialised here rather than in OnParametersSetAsync, which awaits before assigning:
     // the first render happens in between and PersianCalendar throws on year 0.
@@ -165,7 +166,16 @@
         if (ExpenseId is null)
         {
             title = "هزینهٔ جدید";
-            payerId = participants[0].Id;
+
+            // Fast flow: the payer defaults to whoever paid last, so every expense after the
+            // first is one tap instead of two. Settlements do not count as "who pays here".
+            var previous = await Store.Db.GetExpensesAsync(TripId);
+            payerId = previous
+                .Where(e => !e.IsSettlement)
+                .OrderByDescending(e => e.Id)
+                .Select(e => (int?)e.PaidById)
+                .FirstOrDefault() ?? participants[0].Id;
+
             sharers.Clear();
             foreach (var person in participants) sharers.Add(person.Id);
             dateLocal = DateTime.Now;
@@ -183,6 +193,7 @@
             return;
         }
 
+        loaded = expense;
         amountText = MoneyFormat.Format(expense.Amount);
         amountPreview = MoneyFormat.FormatToman(expense.Amount);
         description = expense.Description;
@@ -331,11 +342,11 @@
     {
         error = null;
 
-        if (Amount <= 0) { error = "مبلغ را وارد کن."; return; }
-        if (payerId == 0) { error = "پرداخت‌کننده را انتخاب کن."; return; }
+        if (Amount <= 0) { error = "مبلغ هزینه را وارد کن."; return; }
+        if (payerId == 0) { error = "مشخص کن چه کسی پرداخت کرده است."; return; }
 
         var chosen = participants.Where(p => sharers.Contains(p.Id)).ToList();
-        if (chosen.Count == 0) { error = "حداقل یک نفر را انتخاب کن."; return; }
+        if (chosen.Count == 0) { error = "حداقل یک نفر باید در این هزینه سهیم باشد."; return; }
 
         List<ExpenseShare> shares;
         if (customSplit)
@@ -351,7 +362,7 @@
 
             if (shares.Sum(s => s.Share) != Amount)
             {
-                error = "جمع سهم‌ها با مبلغ کل برابر نیست.";
+                error = "جمع سهم‌ها باید دقیقاً برابر مبلغ کل باشد.";
                 return;
             }
         }
@@ -361,16 +372,13 @@
             shares = chosen.Select((p, i) => new ExpenseShare { ParticipantId = p.Id, Share = split[i] }).ToList();
         }
 
-        var expense = new Expense
-        {
-            Id = ExpenseId ?? 0,
-            TripId = TripId,
-            Description = description.Trim(),
-            Amount = Amount,
-            PaidById = payerId,
-            DateUtc = dateLocal.ToUniversalTime(),
-            IsSettlement = false,
-        };
+        // Edit the row that was loaded rather than rebuilding it: a fresh Expense drops
+        // IsSettlement, which would quietly turn a settlement into an ordinary expense.
+        var expense = loaded ?? new Expense { TripId = TripId };
+        expense.Description = description.Trim();
+        expense.Amount = Amount;
+        expense.PaidById = payerId;
+        expense.DateUtc = dateLocal.ToUniversalTime();
 
         await Store.MutateAsync(db => db.SaveExpenseAsync(expense, shares));
         Back();

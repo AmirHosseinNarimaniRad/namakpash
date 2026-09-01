@@ -43,6 +43,11 @@
         <p class="caption">کسانی که در هزینه‌ای سهیم بوده‌اند قابل حذف نیستند.</p>
     }
 
+    @if (people.Count == 1)
+    {
+        <p class="caption">حداقل دو نفر لازم است تا چیزی برای تقسیم باشد.</p>
+    }
+
     @if (error is not null)
     {
         <div class="notice">@error</div>
@@ -63,7 +68,7 @@
         <div class="dialog" @onclick:stopPropagation="true">
             <h2>حذف رویداد</h2>
             <p class="caption" style="text-align:center">
-                «@name» و همهٔ هزینه‌هایش پاک می‌شوند. این کار برگشت‌پذیر نیست.
+                رویداد «@name» با همهٔ هزینه‌هایش برای همیشه حذف شود؟
             </p>
             <div class="two">
                 <button class="btn" style="background:var(--debtor)" @onclick="DeleteAsync">حذف</button>
@@ -91,7 +96,8 @@
     bool isEditing;
     bool confirmDelete;
 
-    bool CanSave => name.Trim().Length > 0 && people.Count > 0;
+    // Two people minimum: one person has nothing to split, and Android refuses it too.
+    bool CanSave => name.Trim().Length > 0 && people.Count >= 2;
 
     protected override async Task OnParametersSetAsync()
     {

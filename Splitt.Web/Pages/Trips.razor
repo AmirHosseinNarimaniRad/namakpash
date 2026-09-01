@@ -40,11 +40,17 @@
         </div>
     }
 
+    @if (restored is not null)
+    {
+        <div class="notice" role="status" @onclick="() => restored = null">
+            <strong>بازیابی شد.</strong> @restored
+        </div>
+    }
+
     @if (restoreError is not null)
     {
         <div class="notice">
-            <strong>فایل پشتیبان خوانده نشد.</strong> چیزی وارد نشد و اطلاعات فعلی دست‌نخورده ماند.
-            @restoreError
+            <strong>@restoreError</strong> چیزی وارد نشد و اطلاعات فعلی دست‌نخورده ماند.
         </div>
     }
 
@@ -65,6 +71,7 @@
     List<Card> cards = [];
     bool loading = true;
     string? restoreError;
+    string? restored;
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
@@ -95,6 +102,7 @@
     async Task RestoreAsync()
     {
         restoreError = null;
+        restored = null;
         var json = await Store.PickTextFileAsync();
         if (string.IsNullOrWhiteSpace(json)) return;
 
@@ -102,12 +110,19 @@
         {
             var dto = TripExporter.FromJson(json);
             var trip = await Store.MutateAsync(db => db.ImportTripAsync(dto));
-            Nav.NavigateTo($"trip/{trip.Id}");
+
+            // Stay on the list and say so, the way the Android app does. The imported event
+            // is right there in the list; jumping into it silently reads like nothing happened.
+            await LoadAsync();
+            restored = $"رویداد «{trip.Name}» با موفقیت وارد شد.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            restoreError = ex.Message;
-            StateHasChanged();
+            // One fixed sentence: a malformed file throws before Core's own Persian validation
+            // ever runs, and System.Text.Json's English message would land in the UI.
+            restoreError = "فایل انتخاب‌شده یک پشتیبان معتبر «نمک‌پاش» نیست.";
         }
+
+        StateHasChanged();
     }
 }
