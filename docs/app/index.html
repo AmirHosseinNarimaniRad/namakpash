@@ -13,26 +13,29 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="نمک‌پاش" />
 
-    <link href="_framework/dotnet.p6b12fw7el.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-H3MErgfZDpnU1wIoBMOHQXsyyCvtfqKbI3QuueXJ908=" />
+    <link href="_framework/dotnet.6xk9ksxv7n.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-KibvAbKqTZEug1u7+9qDKAqIz9UyXKAjvstMMQbxLDg=" />
     <link rel="stylesheet" href="css/app.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png" />
+    <!-- iOS reads this, not the manifest, when a page is added to the home screen, and it
+         composites any transparency onto black - so this one is a full-bleed opaque square
+         and iOS applies its own rounding. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
     <script type="importmap">{
   "imports": {
     "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.66stpp682q.js",
+    "./_framework/dotnet.js": "./_framework/dotnet.6xk9ksxv7n.js",
     "./_framework/dotnet.native.js": "./_framework/dotnet.native.dl1x7xmqva.js",
-    "./_framework/dotnet.js": "./_framework/dotnet.p6b12fw7el.js",
     "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.zbexyp8zrs.js"
   },
   "scopes": {},
   "integrity": {
     "./_framework/blazor.webassembly.66stpp682q.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
     "./_framework/blazor.webassembly.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
-    "./_framework/dotnet.js": "sha256-H3MErgfZDpnU1wIoBMOHQXsyyCvtfqKbI3QuueXJ908=",
+    "./_framework/dotnet.6xk9ksxv7n.js": "sha256-KibvAbKqTZEug1u7+9qDKAqIz9UyXKAjvstMMQbxLDg=",
+    "./_framework/dotnet.js": "sha256-KibvAbKqTZEug1u7+9qDKAqIz9UyXKAjvstMMQbxLDg=",
     "./_framework/dotnet.native.dl1x7xmqva.js": "sha256-UfG+shGuB7BNiq7m1QZMUJ72jfs/31ON8XmbDxd3eRQ=",
     "./_framework/dotnet.native.js": "sha256-UfG+shGuB7BNiq7m1QZMUJ72jfs/31ON8XmbDxd3eRQ=",
-    "./_framework/dotnet.p6b12fw7el.js": "sha256-H3MErgfZDpnU1wIoBMOHQXsyyCvtfqKbI3QuueXJ908=",
     "./_framework/dotnet.runtime.js": "sha256-MZMguyke9CroSQl+L/SHIGFkPTD+LtYGXkXjAvwWx40=",
     "./_framework/dotnet.runtime.zbexyp8zrs.js": "sha256-MZMguyke9CroSQl+L/SHIGFkPTD+LtYGXkXjAvwWx40="
   }
@@ -54,6 +57,11 @@
     </div>
 
     <script src="_framework/blazor.webassembly.66stpp682q.js"></script>
+    <script>
+        // Registered after boot so the precache never competes with the first paint. In
+        // development this resolves to the no-op worker; publish swaps in the real one.
+        navigator.serviceWorker?.register('service-worker.js');
+    </script>
 </body>
 
 </html>
