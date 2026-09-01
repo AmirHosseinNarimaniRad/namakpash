@@ -43,6 +43,24 @@
         // Registered after boot so the precache never competes with the first paint. In
         // development this resolves to the no-op worker; publish swaps in the real one.
         navigator.serviceWorker?.register('service-worker.js');
+
+        // Which ICU shard the runtime downloads depends on the device language, so the worker
+        // cannot know which of the three published .dat files to keep — and on this very first
+        // load the page is not controlled by it yet, so the request goes unseen. The page does
+        // know: it just fetched one. Hand the url over, or the next launch without a network
+        // dies on a missing .dat after everything else was cached correctly.
+        navigator.serviceWorker?.ready.then(async registration => {
+            for (let attempt = 0; attempt < 40; attempt++) {
+                const icu = performance.getEntriesByType('resource')
+                    .map(entry => entry.name)
+                    .find(name => name.endsWith('.dat'));
+                if (icu) {
+                    registration.active?.postMessage({ type: 'cache', url: icu });
+                    return;
+                }
+                await new Promise(resume => setTimeout(resume, 500));
+            }
+        });
     </script>
 </body>
 

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>بررسی حالت آفلاین — نمک‌پاش</title>
+    <meta name="theme-color" content="#14B8A6" />
+    <base href="/app/" />
+
+    <!-- A plain page on purpose: it has to work when the app itself does not, so no Blazor, no
+         framework, nothing to load. Unlinked, like /selftest. -->
+    <style>
+        @font-face {
+            font-family: Vazirmatn;
+            src: url("fonts/Vazirmatn-Regular.woff2") format("woff2");
+            font-weight: 400;
+            font-display: swap;
+        }
+
+        :root { --bg: #F1F6F5; --card: #FFFFFF; --text: #14343A; --muted: #5B7377; --teal: #14B8A6; --bad: #E5484D; }
+
+        @media (prefers-color-scheme: dark) {
+            :root { --bg: #0F1717; --card: #162223; --text: #E6F0EF; --muted: #9AB0B0; }
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 24px 16px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Vazirmatn, -apple-system, system-ui, sans-serif;
+            line-height: 1.8;
+        }
+
+        main { max-width: 460px; margin: 0 auto; }
+        h1 { font-size: 19px; margin: 0 0 16px; }
+
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .verdict { font-size: 17px; font-weight: 600; }
+        .ok { color: var(--teal); }
+        .bad { color: var(--bad); }
+        .row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--muted); }
+        .row b { color: var(--text); font-weight: 500; }
+        .caption { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            font: inherit;
+            font-weight: 600;
+            color: #fff;
+            background: var(--teal);
+            border: 0;
+            border-radius: 12px;
+        }
+
+        a { color: var(--teal); }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>بررسی حالت آفلاین</h1>
+
+        <div class="card">
+            <p class="verdict" id="verdict">در حال بررسی…</p>
+            <p class="caption" id="explain"></p>
+        </div>
+
+        <div class="card">
+            <div class="row"><span>وضعیت سرویس‌ورکر</span><b id="state">…</b></div>
+            <div class="row"><span>فایل‌های ذخیره‌شده</span><b id="count">…</b></div>
+            <div class="row"><span>حجم ذخیره‌شده</span><b id="size">…</b></div>
+        </div>
+
+        <div class="card">
+            <button id="again">بررسی دوباره</button>
+            <p class="caption">
+                اگر هنوز آماده نیست، یک‌بار <a href=".">خود برنامه</a> را با اینترنت باز کن، چند لحظه
+                صبر کن تا کامل بالا بیاید، بعد دوباره این صفحه را بررسی کن.
+            </p>
+        </div>
+    </main>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        // The app needs roughly the whole shell to boot, so treat a mostly-empty cache as not
+        // ready rather than reporting a green tick for something that would fail offline.
+        const READY_MINIMUM = 40;
+
+        async function check() {
+            $('verdict').textContent = 'در حال بررسی…';
+            $('verdict').className = 'verdict';
+            $('explain').textContent = '';
+
+            if (!('serviceWorker' in navigator)) {
+                report(false, 'خاموش', 0, 0, 'این مرورگر از کار آفلاین پشتیبانی نمی‌کند.');
+                return;
+            }
+
+            // Registering here too, so this page can repair a launch that failed before the app
+            // ever got the chance to register anything.
+            try { await navigator.serviceWorker.register('service-worker.js'); } catch { }
+
+            const registration = await navigator.serviceWorker.getRegistration();
+            const worker = registration && (registration.active || registration.waiting || registration.installing);
+            const state = worker ? worker.state : 'نصب‌نشده';
+
+            let count = 0, bytes = 0, hasIcu = false;
+            for (const key of await caches.keys()) {
+                if (!key.startsWith('namakpash-cache-')) continue;
+                const cache = await caches.open(key);
+                for (const request of await cache.keys()) {
+                    const response = await cache.match(request);
+                    const blob = response && await response.blob();
+                    if (blob) { count++; bytes += blob.size; }
+                    if (request.url.endsWith('.dat')) hasIcu = true;
+                }
+            }
+
+            // The ICU file is boot-critical and arrives separately from the rest, so its
+            // absence means "not ready yet" however many other files are stored.
+            const ready = state === 'activated' && count >= READY_MINIMUM && hasIcu;
+            report(ready, state, count, bytes, ready
+                ? 'می‌توانی اینترنت را قطع کنی و برنامه را از صفحهٔ اصلی باز کنی.'
+                : 'هنوز همهٔ فایل‌ها ذخیره نشده‌اند. برنامه را با اینترنت باز و چند لحظه صبر کن.');
+        }
+
+        function report(ready, state, count, bytes, explain) {
+            $('verdict').textContent = ready ? 'آمادهٔ کار بدون اینترنت است ✓' : 'هنوز آمادهٔ کار بدون اینترنت نیست';
+            $('verdict').className = 'verdict ' + (ready ? 'ok' : 'bad');
+            $('explain').textContent = explain;
+            $('state').textContent = state;
+            $('count').textContent = count.toLocaleString('en-US');
+            $('size').textContent = (bytes / (1024 * 1024)).toFixed(1) + ' مگابایت';
+        }
+
+        $('again').addEventListener('click', check);
+        check();
+    </script>
+</body>
+
+</html>

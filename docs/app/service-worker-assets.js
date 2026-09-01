@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "5Z1VPrIg",
+  "version": "XIaWNEIk",
   "assets": [
     {
       "hash": "sha256-UB3YrEZ6T44cs/fQx4TvNWsT2K8kxLZT2pWJMbfr9mE=",
@@ -70,12 +70,12 @@ self.assetsManifest = {
       "url": "app/_framework/SQLitePCLRaw.provider.e_sqlite3.x3al2forqt.wasm"
     },
     {
-      "hash": "sha256-5e0FbEhFtzBP0Zdr5s5fvlNOoLWaDheLuYQW5z48sCc=",
-      "url": "app/_framework/Splitt.Core.d6s93xjrkw.wasm"
+      "hash": "sha256-1K3jAxLN2lj8BjpZ1djZKmpTmw7WfLptvOh6iwYlwys=",
+      "url": "app/_framework/Splitt.Core.0flblni80d.wasm"
     },
     {
-      "hash": "sha256-hHWcnGlnopOTEzsy1y5BpxB/TFHgi7+m7zlGigfo/LU=",
-      "url": "app/_framework/Splitt.Web.ckyekorhct.wasm"
+      "hash": "sha256-r7BLIyRD/8DSh+CTwk3jtrl/u5Qy1n1CwqIYuuLNfP8=",
+      "url": "app/_framework/Splitt.Web.1caodqjwb8.wasm"
     },
     {
       "hash": "sha256-p23E0xIdNCTmGLo6su2QSWFhEJfLooS9eEYk9AYT8BU=",
@@ -162,8 +162,8 @@ self.assetsManifest = {
       "url": "app/_framework/blazor.webassembly.66stpp682q.js"
     },
     {
-      "hash": "sha256-KibvAbKqTZEug1u7+9qDKAqIz9UyXKAjvstMMQbxLDg=",
-      "url": "app/_framework/dotnet.6xk9ksxv7n.js"
+      "hash": "sha256-VUHTw4U2XGsHOyEBVO5S7NgIj/cr9L1ggZk+z2Zz4YE=",
+      "url": "app/_framework/dotnet.dys7vhl84n.js"
     },
     {
       "hash": "sha256-UfG+shGuB7BNiq7m1QZMUJ72jfs/31ON8XmbDxd3eRQ=",
@@ -192,6 +192,10 @@ self.assetsManifest = {
     {
       "hash": "sha256-Att+UODiyPDspoojRDhwlRRPs2h94JN4568tHfh0wzc=",
       "url": "app/apple-touch-icon.png"
+    },
+    {
+      "hash": "sha256-JukU8dttmsSDYmh8BcFqPnvlGCxNyIXZJAOq4Kkiy9U=",
+      "url": "app/check.html"
     },
     {
       "hash": "sha256-yNzeYptN11pSlNL958wcabiGL9g8e6tb7FQjljA2mk4=",
@@ -226,7 +230,7 @@ self.assetsManifest = {
       "url": "app/icon-maskable-512.png"
     },
     {
-      "hash": "sha256-29DMbcomd/TC5t2+ovtV3/ek83AzWQrnMk2QNVJ6cqc=",
+      "hash": "sha256-wcryK9fR69WZ+YjpNwua14faCWgtjaNxUmUVXZKKWSI=",
       "url": "app/index.html"
     },
     {
